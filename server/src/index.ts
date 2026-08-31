@@ -1,12 +1,21 @@
+import dotenv from "dotenv";
+dotenv.config()
 import express from 'express';
+import type {Request , Response} from "express"
+import userRouter from "./routes/auth"
 
 const app = express();
+app.use(express.json())
 
-app.get("/health" , (_req : express.Request , res: express.Response) => {
+const port = process.env.PORT;
+
+app.use("/auth", userRouter)
+
+app.get("/health" , (_req : Request , res: Response) => {
     res.json({message: "hello"})
-})
+});
 
 
-app.listen(3000 , () => {
-    console.log("listening to port 3000")
-})
+app.listen(port , () => {
+    console.log("listening to port" , port)
+});
