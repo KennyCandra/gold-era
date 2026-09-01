@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
@@ -72,6 +72,13 @@ export default function LoginPage() {
     }
   }
 
+  function handleFormKeyDown(e: KeyboardEvent<HTMLFormElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.requestSubmit();
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5 rounded-xl border border-border bg-surface p-8">
       <div className="flex flex-col gap-2">
@@ -79,7 +86,7 @@ export default function LoginPage() {
         <h1 className="text-3xl font-semibold leading-9 tracking-[-0.02em]">
           Welcome back
         </h1>
-        <p className="text-[13px] leading-[18px] text-muted">
+        <p className="text-[13px] leading-4.5 text-muted">
           Sign in to manage your files
         </p>
       </div>
@@ -91,7 +98,12 @@ export default function LoginPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+      <form
+        onSubmit={handleSubmit}
+        onKeyDown={handleFormKeyDown}
+        className="flex flex-col gap-5"
+        noValidate
+      >
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm font-medium">
             Email
@@ -130,7 +142,7 @@ export default function LoginPage() {
           Sign in
         </Button>
 
-        <p className="text-center text-[13px] leading-[18px] text-muted">
+        <p className="text-center text-[13px] leading-4.5 text-muted">
           Don&apos;t have an account?{" "}
           <Link href="/register" className="text-accent-text hover:underline">
             Register

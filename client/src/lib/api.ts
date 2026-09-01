@@ -11,6 +11,7 @@ const AUTH_ENDPOINTS = [
   "/auth/resend-code",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/auth/logout",
 ];
 
 export const api = axios.create({

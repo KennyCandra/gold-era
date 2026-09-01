@@ -32,6 +32,7 @@ export function FileTypeBarChart({ data, className }: FileTypeBarChartProps) {
             type="category"
             dataKey="name"
             width={110}
+            interval={0}
             tickLine={false}
             axisLine={false}
             tick={{ fill: "var(--muted)", fontSize: 13, fontFamily: "Inter" }}

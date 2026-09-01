@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
@@ -88,6 +88,13 @@ export default function RegisterPage() {
     }
   }
 
+  function handleFormKeyDown(e: KeyboardEvent<HTMLFormElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.requestSubmit();
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5 rounded-xl border border-border bg-surface p-8">
       <div className="flex flex-col gap-2">
@@ -95,7 +102,7 @@ export default function RegisterPage() {
         <h1 className="text-3xl font-semibold leading-9 tracking-[-0.02em]">
           Create your account
         </h1>
-        <p className="text-[13px] leading-[18px] text-muted">
+        <p className="text-[13px] leading-4.5 text-muted">
           Free while you&apos;re under 5 GB
         </p>
       </div>
@@ -107,7 +114,12 @@ export default function RegisterPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+      <form
+        onSubmit={handleSubmit}
+        onKeyDown={handleFormKeyDown}
+        className="flex flex-col gap-5"
+        noValidate
+      >
         <div className="flex flex-col gap-1.5">
           <label htmlFor="name" className="text-sm font-medium">
             Name

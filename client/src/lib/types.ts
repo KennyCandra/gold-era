@@ -8,7 +8,7 @@ export type User = {
   verified: boolean;
   createdAt: string;
   updatedAt: string;
-  _count?: { files: number };
+  fileCount?: number;
 };
 
 export type FileItem = {

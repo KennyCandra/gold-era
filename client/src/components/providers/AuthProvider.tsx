@@ -24,7 +24,7 @@ export type AuthContextValue = {
   register: (name: string, email: string, password: string) => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<void>;
   resendCode: (email: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -114,7 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await api.post("/auth/resend-code", { email });
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+    }
     clearAccessToken();
     queryClient.clear();
     router.push("/login");

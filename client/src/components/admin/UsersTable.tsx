@@ -43,25 +43,25 @@ export function UsersTable({
       <TableHeader>
         <TableRow header>
           <TableCell header>User</TableCell>
-          <TableCell header className="w-[130px]">
+          <TableCell header className="w-32.5">
             Role
           </TableCell>
-          <TableCell header className="w-[110px]">
+          <TableCell header className="w-27.5">
             Status
           </TableCell>
-          <TableCell header align="right" className="w-[70px]">
+          <TableCell header align="right" className="w-17.5">
             Files
           </TableCell>
-          <TableCell header align="right" className="w-[120px]">
+          <TableCell header align="right" className="w-30">
             Joined
           </TableCell>
-          <TableCell header className="w-[44px]" />
+          <TableCell header className="w-11" />
         </TableRow>
       </TableHeader>
       <TableBody>
         {users.map((user) => {
           const isSelf = user.id === currentUserId;
-          const count = user._count?.files ?? 0;
+          const count = user.fileCount ?? 0;
 
           return (
             <TableRow key={user.id}>
@@ -70,7 +70,7 @@ export function UsersTable({
                   <Avatar name={user.name} />
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-[13px] leading-[18px] text-subtle">
+                    <span className="truncate text-[13px] leading-4.5 text-subtle">
                       {user.email}
                     </span>
                   </div>

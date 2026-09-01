@@ -27,12 +27,13 @@ export function FilesByTypeChart({ data }: FilesByTypeChartProps) {
   return (
     <div className="flex flex-col gap-5 rounded-xl border border-border bg-surface p-5">
       <h2 className="text-lg font-semibold leading-7">Files by type</h2>
-      <div className="h-[220px] w-full" role="img" aria-label="Bar chart of files grouped by type">
+      <div className="h-55 w-full" role="img" aria-label="Bar chart of files grouped by type">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
             <XAxis
               dataKey="type"
+              interval={0}
               tick={{ fill: "var(--muted)", fontSize: 12 }}
               axisLine={{ stroke: "var(--border)" }}
               tickLine={false}

@@ -85,4 +85,12 @@ router.post("/reset-password" , validate(resetPasswordSchema) , async (request :
 })
 
 
+router.post("/logout" , async (request : Request , res : Response) => {
+    const { maxAge, ...clearOptions } = cookiesOptions;
+    res.clearCookie("refreshToken" , clearOptions)
+
+    return res.status(200).json({message: "Logged out"})
+})
+
+
 export default router;

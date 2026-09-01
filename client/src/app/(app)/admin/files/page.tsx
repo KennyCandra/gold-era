@@ -37,7 +37,7 @@ function AdminFilesContent() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-
+ 
   const filesQuery = useAdminFiles({
     page,
     limit: PAGE_SIZE,
@@ -114,14 +114,14 @@ function AdminFilesContent() {
           value={ownerFilter}
           onChange={setOwnerFilter}
           aria-label="Filter by owner"
-          className="w-[180px]"
+          className="w-45"
         />
         <Select
           options={TYPE_OPTIONS}
           value={typeFilter}
           onChange={setTypeFilter}
           aria-label="Filter by type"
-          className="w-[160px]"
+          className="w-40"
         />
       </div>
 

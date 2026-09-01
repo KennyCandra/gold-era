@@ -56,9 +56,10 @@ export function useDeleteFile() {
         queryClient.setQueryData(queryKey, data);
       });
     },
-    onSettled: () => {
-      // A deletion changes the admin file list and both stats views too.
-      queryClient.invalidateQueries({ queryKey: ["files"] });
+    onSettled: (_data, _error, id) => {
+      queryClient.removeQueries({ queryKey: ["files", "detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["files", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["files", "all"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });

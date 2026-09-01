@@ -174,9 +174,17 @@ function VerifyEmailForm() {
     }
   };
 
+  function handleFormKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.currentTarget.requestSubmit();
+    }
+  }
+
   return (
     <form
       onSubmit={handleSubmit}
+      onKeyDown={handleFormKeyDown}
       className="flex flex-col gap-6 rounded-xl border border-border bg-surface p-8"
       noValidate
     >
@@ -221,7 +229,7 @@ function VerifyEmailForm() {
             aria-label={`Digit ${index + 1} of ${CODE_LENGTH}`}
             className={cn(
               "h-14 w-12 rounded-lg border bg-surface text-center font-mono text-xl text-text",
-              "transition-colors focus-visible:outline focus-visible:outline-2",
+              "transition-colors focus-visible:outline",
               "focus-visible:outline-accent-border focus-visible:outline-offset-2",
               error ? "border-danger" : "border-border"
             )}
