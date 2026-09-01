@@ -17,6 +17,8 @@ export const validate = (schema : z.ZodType<any , any ,any>) => (req : Request, 
     return res.status(400).json(errors)
 }
 
+  res.locals.validated = result.data;
+
   next();
 };
 

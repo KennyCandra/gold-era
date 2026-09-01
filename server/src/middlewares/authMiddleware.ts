@@ -2,9 +2,9 @@ import { AppError } from "@/lib/AppError";
 import { verifyAccessToken, verifyRefreshToken } from "@/lib/jwt";
 import type { Request , Response , NextFunction } from "express";
 export function authMiddleware (request : Request , _response : Response , next : NextFunction) {
-    const accessToken = request.body.token;
+    const [scheme , accessToken] = (request.headers.authorization ?? "").split(" ");
 
-    if (!accessToken){
+    if (scheme !== "Bearer" || !accessToken){
         throw new AppError(401 , "Not Authorized")
     }
 

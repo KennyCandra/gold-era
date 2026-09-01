@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../lib/AppError";
 import { toAppError as toPrismaAppError } from "../lib/prismaError";
 import { toAppError as toJwtAppError } from "../lib/jwtError";
+import { toAppError as toMulterAppError } from "../lib/multerError";
 
 export const errorHandler = (
   err: Error,
@@ -12,7 +13,7 @@ export const errorHandler = (
   const error =
     err instanceof AppError
       ? err
-      : toPrismaAppError(err) ?? toJwtAppError(err);
+      : toPrismaAppError(err) ?? toJwtAppError(err) ?? toMulterAppError(err);
 
   if (error) {
     if (!(err instanceof AppError)) console.error(err);

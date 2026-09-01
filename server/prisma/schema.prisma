@@ -32,6 +32,7 @@ model User {
     updatedAt DateTime @updatedAt      @map("updated_at")
 
     verificationCodes VerificationCode[]
+    files             File[]
 
     @@map("users")
 }
@@ -48,4 +49,23 @@ model VerificationCode {
 
     @@index([userId, type])
     @@map("verification_codes")
+}
+
+model File {
+    id           String    @id @default(uuid())
+    originalName String    @map("original_name")
+    key          String    @unique
+    mimeType     String    @map("mime_type")
+    size         Int
+    content      String?
+    deletedAt    DateTime? @map("deleted_at")
+    createdAt    DateTime  @default(now()) @map("created_at")
+    updatedAt    DateTime  @updatedAt @map("updated_at")
+
+    userId String @map("user_id")
+    user   User   @relation(fields: [userId], references: [id])
+
+    @@index([userId, deletedAt])
+    @@index([mimeType])
+    @@map("files")
 }

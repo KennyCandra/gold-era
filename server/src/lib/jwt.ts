@@ -30,31 +30,21 @@ export const generateTokens = (payload: TokenPayload) => {
 };
 
 export const verifyAccessToken = (token: string): TokenPayload => {
-    const verified =  jwt.verify(token, ACCESS_SECRET) as TokenPayload;
-    if (verified){
-      return {
-        userId: verified.userId,
-        role: verified.role,
-        verified: true
-      }
-    } else {
-       return{ userId: null,
-        role: null,
-        verified: false}
-    }
+  const payload = jwt.verify(token, ACCESS_SECRET) as TokenPayload;
+
+  return {
+    userId: payload.userId,
+    role: payload.role,
+    verified: payload.verified ?? false,
   };
+};
 
 export const verifyRefreshToken = (token: string): TokenPayload => {
-  const verified =  jwt.verify(token, REFRESH_SECRET) as TokenPayload;
-    if (verified){
-      return {
-        userId: verified.userId,
-        role: verified.role,
-        verified: true
-      }
-    } else {
-       return{ userId: null,
-        role: null,
-        verified: false}
-    }
+  const payload = jwt.verify(token, REFRESH_SECRET) as TokenPayload;
+
+  return {
+    userId: payload.userId,
+    role: payload.role,
+    verified: payload.verified ?? false,
+  };
 };
