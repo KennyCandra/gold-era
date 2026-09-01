@@ -14,7 +14,7 @@ export const validate = (schema : z.ZodType<any , any ,any>) => (req : Request, 
       message: issue.message,
     }));
 
-    return res.status(401).json(errors)
+    return res.status(400).json(errors)
 }
 
   next();

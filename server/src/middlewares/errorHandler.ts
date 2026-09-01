@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../lib/AppError";
+import { toAppError as toPrismaAppError } from "../lib/prismaError";
+import { toAppError as toJwtAppError } from "../lib/jwtError";
 
 export const errorHandler = (
   err: Error,
@@ -7,10 +9,17 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({
+  const error =
+    err instanceof AppError
+      ? err
+      : toPrismaAppError(err) ?? toJwtAppError(err);
+
+  if (error) {
+    if (!(err instanceof AppError)) console.error(err);
+
+    res.status(error.statusCode).json({
       success: false,
-      message: err.message,
+      message: error.message,
     });
     return;
   }

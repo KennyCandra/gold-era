@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 import UserRepository from "@/reposatories/user";
 import { AppError } from "@/lib/AppError";
-import { generateAccessToken, generateRefreshToken } from "@/lib/jwt";
+import { generateTokens } from "@/lib/jwt";
 import { UserCreateInput } from "@/generated/prisma/models";
+import { userWithoutPassword } from "@/lib/data";
 
 class authController {
     static async login(email : string , password: string){
@@ -11,7 +12,7 @@ class authController {
             throw new AppError(404 , "user not found")
         }
 
-        const isMatch = bcrypt.compare(password , user?.password || "");
+        const isMatch = await bcrypt.compare(password , user?.password || "");
 
         if (!isMatch){
             throw new AppError(401 , "wrong password")
@@ -19,15 +20,16 @@ class authController {
 
         const payload = {
             userId : user.id,
-            role : "user"
+            role : user.role
         }
-        const acesssToken = generateAccessToken(payload);
-        const refreshToken = generateRefreshToken(payload);
+
+        const tokens = generateTokens(payload)
+        const userWithoutPw = userWithoutPassword(user);
 
         return {
-            user,
-            acesssToken,
-            refreshToken
+            user : userWithoutPw,
+            acesssToken : tokens.accessToken,
+            refreshToken : tokens.refreshToken
         }
 
     }
@@ -38,12 +40,45 @@ class authController {
         const userData : UserCreateInput= {
             name ,
             email,
-            password : hasedPassword
+            password : hasedPassword,
         }
-        const newUser = UserRepository.create(userData)
+        const newUser = await UserRepository.create(userData);
+
+        return {newUser}
+
+    }
+
+    static async fetchUserData(userId : string){
+        const user = await UserRepository.findById(userId);
+
+        if (!user){
+            throw new AppError(404 , "user not found")
+        }
+        const safeUser = userWithoutPassword(user);
+        return safeUser;
+    }
+
+
+    static async refresh(userId : string){
+        const user = await UserRepository.findById(userId);
+
+        if (!user){
+            throw new AppError(403 , "Not Authorized")
+        }
+
+        const payload = {
+            userId : user.id,
+            role : user.role
+        }
+        
+        const tokens = generateTokens(payload);
+        const userwithoutPw = userWithoutPassword(user);
+
 
         return {
-            newUser
+            user : userwithoutPw,
+            accessToken : tokens.accessToken,
+            refreshToken : tokens.refreshToken
         }
     }
 }

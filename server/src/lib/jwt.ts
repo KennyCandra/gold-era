@@ -1,14 +1,17 @@
+import { Role } from "@/generated/prisma/enums";
 import jwt from "jsonwebtoken";
+import { env } from "@/config";
 
-const ACCESS_SECRET = process.env.JWT_SECRET!;
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
+const ACCESS_SECRET = env.jwtSecret;
+const REFRESH_SECRET = env.jwtRefreshSecret;
 
 const ACCESS_EXPIRY = "15m";
 const REFRESH_EXPIRY = "7d";
 
 export type TokenPayload = {
-  userId: string;
-  role: string;
+  userId: string | null;
+  role: Role | null ;
+  verified?: boolean
 };
 
 export const generateAccessToken = (payload: TokenPayload): string => {
@@ -27,9 +30,31 @@ export const generateTokens = (payload: TokenPayload) => {
 };
 
 export const verifyAccessToken = (token: string): TokenPayload => {
-  return jwt.verify(token, ACCESS_SECRET) as TokenPayload;
-};
+    const verified =  jwt.verify(token, ACCESS_SECRET) as TokenPayload;
+    if (verified){
+      return {
+        userId: verified.userId,
+        role: verified.role,
+        verified: true
+      }
+    } else {
+       return{ userId: null,
+        role: null,
+        verified: false}
+    }
+  };
 
 export const verifyRefreshToken = (token: string): TokenPayload => {
-  return jwt.verify(token, REFRESH_SECRET) as TokenPayload;
+  const verified =  jwt.verify(token, REFRESH_SECRET) as TokenPayload;
+    if (verified){
+      return {
+        userId: verified.userId,
+        role: verified.role,
+        verified: true
+      }
+    } else {
+       return{ userId: null,
+        role: null,
+        verified: false}
+    }
 };
