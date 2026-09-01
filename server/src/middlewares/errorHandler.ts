@@ -3,6 +3,7 @@ import { AppError } from "../lib/AppError";
 import { toAppError as toPrismaAppError } from "../lib/prismaError";
 import { toAppError as toJwtAppError } from "../lib/jwtError";
 import { toAppError as toMulterAppError } from "../lib/multerError";
+import { toAppError as toBodyParserAppError } from "../lib/bodyParserError";
 
 export const errorHandler = (
   err: Error,
@@ -13,7 +14,10 @@ export const errorHandler = (
   const error =
     err instanceof AppError
       ? err
-      : toPrismaAppError(err) ?? toJwtAppError(err) ?? toMulterAppError(err);
+      : toPrismaAppError(err) ??
+        toJwtAppError(err) ??
+        toMulterAppError(err) ??
+        toBodyParserAppError(err);
 
   if (error) {
     if (!(err instanceof AppError)) console.error(err);
