@@ -5,12 +5,12 @@ import toast from "react-hot-toast";
 
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { FileTable } from "@/components/files/FileTable";
-import { useAdminFiles, useDeleteAdminFile } from "@/hooks/useAdmin";
+import { useAdminFiles, useDeleteAdminFile, useUsers } from "@/hooks/useAdmin";
 import { downloadFile } from "@/hooks/useFiles";
 import { EmptyState, ErrorState, Modal, Button, Pagination, Select, SearchInput } from "@/components/ui";
 import { FILE_TYPE_GROUPS } from "@/lib/constants";
 import type { FileItem, SortOrder } from "@/lib/types";
-import { getFileKind } from "@/lib/utils";
+import { GROUP_TO_MIMES } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
@@ -37,37 +37,32 @@ function AdminFilesContent() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
- 
+  const mimeType =
+    typeFilter !== "all" ? GROUP_TO_MIMES[typeFilter]?.join(",") : undefined;
+
   const filesQuery = useAdminFiles({
     page,
     limit: PAGE_SIZE,
     search: search || undefined,
     sortBy,
     sortOrder,
+    mimeType,
+    userId: ownerFilter !== "all" ? ownerFilter : undefined,
   });
 
   const deleteFile = useDeleteAdminFile();
 
-  const allFiles = useMemo(() => filesQuery.data?.data ?? [], [filesQuery.data]);
+  const usersQuery = useUsers({ page: 1, limit: 100, sortBy: "name", sortOrder: "asc" });
 
   const ownerOptions = useMemo(() => {
-    const seen = new Map<string, string>();
-    allFiles.forEach((f) => {
-      if (f.user) seen.set(f.user.id, f.user.name);
-    });
+    const users = usersQuery.data?.data ?? [];
     return [
       { value: "all", label: "All owners" },
-      ...[...seen.entries()].map(([id, name]) => ({ value: id, label: name })),
+      ...users.map((u) => ({ value: u.id, label: u.name })),
     ];
-  }, [allFiles]);
+  }, [usersQuery.data]);
 
-  const files = useMemo(() => {
-    return allFiles.filter((f) => {
-      if (typeFilter !== "all" && getFileKind(f.mimeType).group !== typeFilter) return false;
-      if (ownerFilter !== "all" && f.userId !== ownerFilter) return false;
-      return true;
-    });
-  }, [allFiles, typeFilter, ownerFilter]);
+  const files = filesQuery.data?.data ?? [];
 
   const handleSort = (field: string) => {
     if (field === sortBy) {

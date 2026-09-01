@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
@@ -15,7 +15,7 @@ import {
   TYPE_OPTIONS,
 } from "@/components/files/FilesToolbar";
 import { downloadFile, useDeleteFile, useFiles } from "@/hooks/useFiles";
-import { getFileKind } from "@/lib/utils";
+import { GROUP_TO_MIMES } from "@/lib/utils";
 import type { ApiError, FileItem, SortOrder } from "@/lib/types";
 
 const PAGE_SIZE = 10;
@@ -82,26 +82,21 @@ function FilesPageContent() {
 
   const { sortBy, sortOrder } = sortFromValue(sort);
 
+  const typeLabel = TYPE_OPTIONS.find((o) => o.value === type)?.label;
+  const mimeType =
+    type !== "all" && typeLabel ? GROUP_TO_MIMES[typeLabel]?.join(",") : undefined;
+
   const { data, isLoading, isError, isFetching, refetch } = useFiles({
     page,
     limit: PAGE_SIZE,
     search: urlQuery || undefined,
     sortBy,
     sortOrder,
+    mimeType,
   });
 
   const deleteMutation = useDeleteFile();
   const [fileToDelete, setFileToDelete] = useState<FileItem | null>(null);
-
-  const filteredData = useMemo(() => {
-    if (!data) return [];
-    if (type === "all") return data.data;
-    return data.data.filter((file) => {
-      const ext = file.originalName.split(".").pop() ?? "";
-      const kind = getFileKind(file.mimeType || ext);
-      return kind.group.toLowerCase() === TYPE_OPTIONS.find((o) => o.value === type)?.label.toLowerCase();
-    });
-  }, [data, type]);
 
   const hasAnyFiles = (data?.total ?? 0) > 0;
   const hasActiveFilters = !!urlQuery || type !== "all";
@@ -193,7 +188,7 @@ function FilesPageContent() {
         <>
           {view === "grid" ? (
             <FileGrid
-              files={filteredData}
+              files={data?.data ?? []}
               isLoading={isLoading}
               onDelete={setFileToDelete}
               onDownload={handleDownload}
@@ -201,7 +196,7 @@ function FilesPageContent() {
             />
           ) : (
             <FileTable
-              files={filteredData}
+              files={data?.data ?? []}
               isLoading={isLoading}
               sortBy={sortBy}
               sortOrder={sortOrder}

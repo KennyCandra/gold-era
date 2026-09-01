@@ -69,6 +69,8 @@ export type ListQueryParams = {
   search?: string;
   sortBy?: string;
   sortOrder?: SortOrder;
+  mimeType?: string;
+  userId?: string;
 };
 
 export type ApiError = {

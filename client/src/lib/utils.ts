@@ -96,6 +96,22 @@ const DEFAULT_KIND: FileKind = {
   colorVar: "--c6",
 };
 
+export const GROUP_TO_MIMES: Record<string, string[]> = {
+  Images: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+  PDFs: ["application/pdf"],
+  Spreadsheets: [
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+  ],
+  Documents: [
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ],
+  Text: ["text/plain", "application/json"],
+  Archives: ["application/zip", "application/x-zip-compressed"],
+};
+
 export function getFileKind(mimeOrExt: string): FileKind {
   const input = mimeOrExt.toLowerCase().trim();
 
