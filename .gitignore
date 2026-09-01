@@ -35,3 +35,7 @@ Thumbs.db
 coverage/
 *.tsbuildinfo
 .vercel
+
+/design
+.claude
+*.md
