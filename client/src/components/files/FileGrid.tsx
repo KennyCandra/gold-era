@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Download, Trash2 } from "lucide-react";
 
 import { Badge, FileTypeIcon, Skeleton } from "@/components/ui";
@@ -29,6 +30,7 @@ export function FileGrid({
   className,
 }: FileGridProps) {
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
 
   if (isLoading) {
     return (
@@ -59,12 +61,25 @@ export function FileGrid({
         className
       )}
     >
-      {files.map((file) => {
+      <AnimatePresence initial={false}>
+      {files.map((file, index) => {
         const ext = getExt(file);
         const kind = getFileKind(file.mimeType || ext);
 
         return (
-          <li key={file.id}>
+          <motion.li
+            key={file.id}
+            layout={!reduceMotion}
+            initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+            transition={{
+              duration: 0.2,
+              ease: "easeOut",
+              delay: reduceMotion ? 0 : Math.min(index * 0.03, 0.24),
+              layout: { duration: 0.2, ease: "easeOut" },
+            }}
+          >
             <div
               role="link"
               tabIndex={0}
@@ -128,9 +143,10 @@ export function FileGrid({
                 <span>{formatRelative(file.createdAt)}</span>
               </div>
             </div>
-          </li>
+          </motion.li>
         );
       })}
+      </AnimatePresence>
     </ul>
   );
 }

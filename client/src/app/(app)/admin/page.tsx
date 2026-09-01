@@ -28,10 +28,10 @@ function AdminOverviewContent() {
       <div className="flex flex-col gap-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-[104px] rounded-xl" />
+            <Skeleton key={i} className="h-26 rounded-xl" />
           ))}
         </div>
-        <Skeleton className="h-[290px] rounded-xl" />
+        <Skeleton className="h-72.5 rounded-xl" />
         <TableSkeleton rows={5} />
       </div>
     );
@@ -51,14 +51,14 @@ function AdminOverviewContent() {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile
+        <StatTile index={0}
           label="Total Users"
           value={stats.totalUsers}
           delta={`${stats.verifiedUsers} verified · ${stats.unverifiedUsers} pending`}
         />
-        <StatTile label="Total Files" value={stats.totalFiles} />
-        <StatTile label="Storage Used" value={formatBytes(stats.storageUsed)} />
-        <StatTile
+        <StatTile index={1} label="Total Files" value={stats.totalFiles} />
+        <StatTile index={2} label="Storage Used" value={formatBytes(stats.storageUsed)} />
+        <StatTile index={3}
           label="New This Week"
           value={`+${newFilesThisWeek}`}
           delta="files uploaded"

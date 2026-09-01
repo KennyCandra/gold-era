@@ -1,4 +1,8 @@
-import { cn } from '@/lib/utils';
+"use client";
+
+import { motion, useReducedMotion } from "framer-motion";
+
+import { cn } from "@/lib/utils";
 
 export interface ProgressBarProps {
   value: number;
@@ -7,6 +11,7 @@ export interface ProgressBarProps {
 
 export function ProgressBar({ value, className }: ProgressBarProps) {
   const clamped = Math.min(100, Math.max(0, value));
+  const reduceMotion = useReducedMotion();
 
   return (
     <div
@@ -14,11 +19,17 @@ export function ProgressBar({ value, className }: ProgressBarProps) {
       aria-valuenow={clamped}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={cn('h-1.5 w-full rounded-full bg-border', className)}
+      className={cn('h-1.5 w-full overflow-hidden rounded-full bg-border', className)}
     >
-      <div
-        className="h-1.5 rounded-full bg-accent transition-[width] duration-300 ease-out"
-        style={{ width: `${clamped}%` }}
+      <motion.div
+        className="h-1.5 rounded-full bg-accent"
+        initial={false}
+        animate={{ width: `${clamped}%` }}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 170, damping: 26 }
+        }
       />
     </div>
   );

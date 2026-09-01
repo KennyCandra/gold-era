@@ -12,10 +12,10 @@ export function StatsGrid({ stats, lastFile }: StatsGridProps) {
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      <StatTile label="Total Files" value={stats.totalFiles} />
-      <StatTile label="Storage Used" value={formatBytes(stats.storageUsed)} />
-      <StatTile label="File Types" value={typeCount} />
-      <StatTile
+      <StatTile index={0} label="Total Files" value={stats.totalFiles} />
+      <StatTile index={1} label="Storage Used" value={formatBytes(stats.storageUsed)} />
+      <StatTile index={2} label="File Types" value={typeCount} />
+      <StatTile index={3}
         label="Last Upload"
         value={
           <span className="flex flex-col gap-1">

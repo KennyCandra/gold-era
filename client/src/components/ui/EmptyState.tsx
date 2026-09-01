@@ -1,4 +1,7 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 export interface EmptyStateProps {
@@ -30,6 +33,8 @@ function DefaultIcon() {
 }
 
 export function EmptyState({ heading, message, action, icon, className }: EmptyStateProps) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <div
       className={cn(
@@ -37,7 +42,15 @@ export function EmptyState({ heading, message, action, icon, className }: EmptyS
         className,
       )}
     >
-      {icon ?? <DefaultIcon />}
+      <motion.div
+        animate={
+          reduceMotion
+            ? undefined
+            : { y: [0, -5, 0], transition: { duration: 3.5, repeat: Infinity, ease: 'easeInOut' } }
+        }
+      >
+        {icon ?? <DefaultIcon />}
+      </motion.div>
       <span className="text-lg font-semibold leading-7">{heading}</span>
       {message && <span className="text-sm text-muted">{message}</span>}
       {action && <div className="mt-2">{action}</div>}

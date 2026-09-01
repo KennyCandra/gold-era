@@ -10,9 +10,9 @@ export interface ProfileStatsProps {
 export function ProfileStats({ filesUploaded, storageBytes, verified }: ProfileStatsProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <StatTile label="Files Uploaded" value={filesUploaded} />
-      <StatTile label="Storage Used" value={formatBytes(storageBytes)} />
-      <StatTile
+      <StatTile index={0} label="Files Uploaded" value={filesUploaded} />
+      <StatTile index={1} label="Storage Used" value={formatBytes(storageBytes)} />
+      <StatTile index={2}
         label="Account Status"
         value={
           <span className="inline-flex items-center gap-2">

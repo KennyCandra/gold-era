@@ -53,8 +53,8 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
           <motion.aside
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            exit={{ x: "-100%", transition: { duration: 0.18, ease: "easeIn" } }}
+            transition={{ type: "spring", stiffness: 400, damping: 34 }}
             className="relative flex h-full w-[280px] flex-col border-r border-border bg-surface shadow-[var(--shadow)]"
           >
             <div className="flex items-center gap-2.5 px-6 py-6">
@@ -83,6 +83,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
                   key={item.href}
                   item={item}
                   active={isActivePath(pathname, item.href)}
+                  indicatorId="drawer-nav"
                   showLabel
                   onClick={onClose}
                 />
@@ -99,6 +100,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
                       key={item.href}
                       item={item}
                       active={isActivePath(pathname, item.href)}
+                      indicatorId="drawer-nav"
                       showLabel
                       onClick={onClose}
                     />

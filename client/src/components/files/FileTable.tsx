@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { AnimatePresence } from "framer-motion";
 import { Download, Trash2 } from "lucide-react";
 
 import {
   Avatar,
   Badge,
   FileTypeIcon,
+  MotionTableRow,
   Table,
   TableBody,
   TableCell,
@@ -90,13 +92,15 @@ export function FileTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {files.map((file) => {
+        <AnimatePresence initial={false}>
+        {files.map((file, index) => {
           const ext = getExt(file);
           const kind = getFileKind(file.mimeType || ext);
 
           return (
-            <TableRow
+            <MotionTableRow
               key={file.id}
+              index={index}
               className="cursor-pointer"
               onClick={() => router.push(`/files/${file.id}`)}
             >
@@ -154,9 +158,10 @@ export function FileTable({
                   </button>
                 </div>
               </TableCell>
-            </TableRow>
+            </MotionTableRow>
           );
         })}
+        </AnimatePresence>
       </TableBody>
     </Table>
   );

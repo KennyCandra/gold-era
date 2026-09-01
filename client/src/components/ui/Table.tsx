@@ -1,4 +1,7 @@
+'use client';
+
 import type { HTMLAttributes, ThHTMLAttributes, TdHTMLAttributes, ReactNode } from 'react';
+import { motion, useReducedMotion, type HTMLMotionProps } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -47,6 +50,36 @@ export function TableRow({ header = false, className, children, ...props }: Tabl
   );
 }
 
+export interface MotionTableRowProps extends HTMLMotionProps<'tr'> {
+  index?: number;
+}
+
+export function MotionTableRow({ index = 0, className, children, ...props }: MotionTableRowProps) {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.tr
+      layout={!reduceMotion}
+      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -12 }}
+      transition={{
+        duration: 0.2,
+        ease: 'easeOut',
+        delay: reduceMotion ? 0 : Math.min(index * 0.03, 0.24),
+        layout: { duration: 0.2, ease: 'easeOut' },
+      }}
+      className={cn(
+        'border-b border-border last:border-b-0 transition-colors hover:bg-bg',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </motion.tr>
+  );
+}
+
 type TableCellAlign = 'left' | 'right' | 'center';
 
 export interface TableCellProps
@@ -83,7 +116,7 @@ export function TableCell({
       onClick={onSort}
       className={cn(
         'inline-flex items-center gap-1 font-medium text-muted',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2',
+        'focus-visible:outline focus-visible:outline-accent-border focus-visible:outline-offset-2',
         align === 'right' && 'flex-row-reverse',
       )}
     >
@@ -107,7 +140,7 @@ export function TableCell({
         alignClasses[align],
         header
           ? 'h-11 whitespace-nowrap text-sm font-medium text-muted'
-          : 'h-[52px] text-text',
+          : 'h-13 text-text',
         className,
       )}
       {...props}

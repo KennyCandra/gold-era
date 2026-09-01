@@ -43,10 +43,10 @@ export function Modal({ open, onClose, title, children, actions, className }: Mo
           <motion.div
             role="dialog"
             aria-modal="true"
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 4, transition: { duration: 0.12, ease: 'easeIn' } }}
+            transition={{ type: 'spring', stiffness: 420, damping: 30 }}
             className={cn(
               'relative flex w-full max-w-[480px] flex-col gap-3 rounded-xl border border-border bg-raised p-5 shadow-[var(--shadow)]',
               className,
