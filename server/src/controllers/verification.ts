@@ -12,15 +12,6 @@ import { VerificationType } from "@/generated/prisma/client";
 const RATE_LIMIT = 10;
 const RATE_WINDOW_MS = 60 * 60 * 1000;
 
-const assertUnderRateLimit = async (userId: string, type: VerificationType) => {
-  const since = new Date(Date.now() - RATE_WINDOW_MS);
-  const recent = await VerificationCodeRepository.countSince(userId, type, since);
-
-  if (recent >= RATE_LIMIT) {
-    throw new AppError(429, "Too many requests, please try again later");
-  }
-};
-
 const issueCode = async (userId: string, type: VerificationType) => {
   const code = generateCode();
 
@@ -79,32 +70,34 @@ class verificationController {
       return updated;
     });
 
-    const tokens = generateTokens({
-      userId: verifiedUser.id,
-      role: verifiedUser.role,
-      verified: true,
-    });
+    const tokens = generateTokens({ userId: verifiedUser.id });
 
     return { user: userWithoutPassword(verifiedUser), ...tokens };
   }
 
-  static async resendCode(userId: string) {
-    const user = await UserRepository.findById(userId);
+  static async resendCode(email: string) {
+    const message = "If that email is registered and unverified, a code has been sent";
+    const user = await UserRepository.findByEmail(email);
 
-    if (!user) {
-      throw new AppError(401, "Not Authorized");
+    if (!user || user.verified) {
+      return { message };
     }
 
-    if (user.verified) {
-      throw new AppError(409, "Email is already verified");
-    }
+    const since = new Date(Date.now() - RATE_WINDOW_MS);
+    const recent = await VerificationCodeRepository.countSince(
+      user.id,
+      VerificationType.EMAIL_VERIFICATION,
+      since
+    );
 
-    await assertUnderRateLimit(user.id, VerificationType.EMAIL_VERIFICATION);
+    if (recent >= RATE_LIMIT) {
+      return { message };
+    }
 
     const code = await issueCode(user.id, VerificationType.EMAIL_VERIFICATION);
     await sendVerificationEmail(user.email, code);
 
-    return { message: "Verification code sent" };
+    return { message };
   }
 
   static async forgotPassword(email: string) {

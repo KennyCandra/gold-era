@@ -1,60 +1,87 @@
 import { AppError } from "@/lib/AppError";
 import { verifyAccessToken, verifyRefreshToken } from "@/lib/jwt";
-import type { Request , Response , NextFunction } from "express";
-export function authMiddleware (request : Request , _response : Response , next : NextFunction) {
-    const [scheme , accessToken] = (request.headers.authorization ?? "").split(" ");
+import UserRepository from "@/reposatories/user";
+import { Role } from "@/generated/prisma/enums";
+import type { Request, Response, NextFunction } from "express";
 
-    if (scheme !== "Bearer" || !accessToken){
-        throw new AppError(401 , "Not Authorized")
-    }
+const loadUser = async (userId: string | undefined) => {
+  if (!userId) {
+    throw new AppError(401, "Not Authorized");
+  }
 
-    const verfiedToken = verifyAccessToken(accessToken);
+  const user = await UserRepository.findById(userId);
 
-    if (!verfiedToken || !verfiedToken.role || !verfiedToken.userId){
-        throw new AppError(401 , "Not Authorized")
-    }
+  if (!user) {
+    throw new AppError(401, "Not Authorized");
+  }
 
-    request.user = {
-        id : verfiedToken.userId,
-        role : verfiedToken.role,
-        verified : verfiedToken.verified ?? false
-    }
+  return { id: user.id, role: user.role, verified: user.verified };
+};
 
-    next()
+export async function authMiddleware(
+  request: Request,
+  _response: Response,
+  next: NextFunction
+) {
+  const [scheme, accessToken] = (request.headers.authorization ?? "").split(" ");
 
+  if (scheme !== "Bearer" || !accessToken) {
+    throw new AppError(401, "Not Authorized");
+  }
+
+  const { userId } = verifyAccessToken(accessToken);
+
+  request.user = await loadUser(userId);
+
+  next();
 }
 
+export async function refreshTokenMiddleware(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  const refreshToken = req.cookies.refreshToken;
 
-export function refreshTokenMiddleware(req: Request , res : Response , next: NextFunction){
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken){
-        throw new AppError(403 , "Not Authorized")
-    }
+  if (!refreshToken) {
+    throw new AppError(401, "Not Authorized");
+  }
 
-    const verifiedToken = verifyRefreshToken(refreshToken);
+  const { userId } = verifyRefreshToken(refreshToken);
 
-    if (!verifiedToken || !verifiedToken.userId || !verifiedToken.role){
-        throw new AppError(403 , "Not Authorized")
-    }
+  req.user = await loadUser(userId);
 
-    req.user = {
-        id : verifiedToken.userId,
-        role : verifiedToken.role,
-        verified : verifiedToken.verified ?? false
-    }
-
-
-    next()
+  next();
 }
 
-export function requireVerified(req: Request , _res : Response , next: NextFunction){
-    if (!req.user){
-        throw new AppError(401 , "Not Authorized")
-    }
+export function requireVerified(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  if (!req.user) {
+    throw new AppError(401, "Not Authorized");
+  }
 
-    if (!req.user.verified){
-        throw new AppError(403 , "Email not verified")
-    }
+  if (!req.user.verified) {
+    throw new AppError(403, "Email not verified");
+  }
 
-    next()
+  next();
 }
+
+export const authorize =
+  (...roles: Role[]) =>
+  (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new AppError(401, "Not Authorized");
+    }
+
+    if (!roles.includes(req.user.role)) {
+      throw new AppError(403, "Forbidden");
+    }
+
+    next();
+  };
+
+export const requireAdmin = authorize(Role.ADMIN);

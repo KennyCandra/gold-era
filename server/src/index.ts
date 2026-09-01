@@ -5,6 +5,7 @@ import type {Request , Response} from "express"
 import userRouter from "./routes/auth"
 import fileRouter from "./routes/file"
 import statsRouter from "./routes/stats"
+import adminUserRouter from "./routes/user"
 import { errorHandler } from "./middlewares/errorHandler"
 import cookieParser from "cookie-parser"
 import cors from "cors";
@@ -17,6 +18,7 @@ const port = env.port;
 app.use(cors({ origin: env.clientUrl, credentials: true }));
 app.use("/auth", userRouter)
 app.use("/files", fileRouter)
+app.use("/users", adminUserRouter)
 app.use("/stats", statsRouter)
 
 app.get("/health" , (_req : Request , res: Response) => {

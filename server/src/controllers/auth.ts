@@ -24,18 +24,12 @@ class authController {
             throw new AppError(401 , "Invalid email or password")
         }
 
-        const payload = {
-            userId : user.id,
-            role : user.role,
-            verified : user.verified
-        }
-
-        const tokens = generateTokens(payload)
+        const tokens = generateTokens({ userId: user.id })
         const userWithoutPw = userWithoutPassword(user);
 
         return {
             user : userWithoutPw,
-            acesssToken : tokens.accessToken,
+            accessToken : tokens.accessToken,
             refreshToken : tokens.refreshToken
         }
 
@@ -85,15 +79,10 @@ class authController {
         const user = await UserRepository.findById(userId);
 
         if (!user){
-            throw new AppError(403 , "Not Authorized")
+            throw new AppError(401 , "Not Authorized")
         }
 
-        const payload = {
-            userId : user.id,
-            role : user.role
-        }
-        
-        const tokens = generateTokens(payload);
+        const tokens = generateTokens({ userId: user.id });
         const userwithoutPw = userWithoutPassword(user);
 
 

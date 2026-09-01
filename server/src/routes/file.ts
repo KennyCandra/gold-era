@@ -3,12 +3,16 @@ import type { Request, Response } from "express";
 import * as z from "zod";
 import fileController from "../controllers/file";
 import { validate } from "@/middlewares/validate";
-import { authMiddleware, requireVerified } from "@/middlewares/authMiddleware";
+import { authMiddleware, requireVerified, requireAdmin } from "@/middlewares/authMiddleware";
+import { Role } from "@/generated/prisma/enums";
 import { listFilesSchema, fileIdSchema } from "@/schema/file";
 import { upload } from "@/config/multer";
 import { storage } from "@/lib/storage";
 
 const router = Router();
+
+const scopeFor = (user: Express.Request["user"]) =>
+  user!.role === Role.ADMIN ? undefined : user!.id;
 
 router.post("/upload", authMiddleware, requireVerified, upload.array("files"),
   async (request: Request, res: Response) => {
@@ -24,6 +28,18 @@ router.get("/", authMiddleware, validate(listFilesSchema),
     const { query } = res.locals.validated as z.infer<typeof listFilesSchema>;
 
     const result = await fileController.list({ ...query, userId: request.user!.id });
+
+    return res.status(200).json(result);
+  });
+
+
+// Must precede "/:id" - Express matches in order, and "all" would otherwise be
+// read as an id and rejected by the uuid check.
+router.get("/all", authMiddleware, requireAdmin, validate(listFilesSchema),
+  async (_request: Request, res: Response) => {
+    const { query } = res.locals.validated as z.infer<typeof listFilesSchema>;
+
+    const result = await fileController.list({ ...query, withOwner: true });
 
     return res.status(200).json(result);
   });
@@ -64,7 +80,7 @@ router.get("/:id/download", authMiddleware, validate(fileIdSchema),
 
 router.delete("/:id", authMiddleware, validate(fileIdSchema),
   async (request: Request, res: Response) => {
-    const result = await fileController.softDelete(request.params.id!, request.user!.id);
+    const result = await fileController.softDelete(request.params.id!, scopeFor(request.user));
 
     return res.status(200).json(result);
   });

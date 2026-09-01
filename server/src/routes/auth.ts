@@ -41,8 +41,9 @@ router.get("/refresh" , refreshTokenMiddleware , async(req : Request , res: Resp
     const userId = req.user?.id;
 
     const response = await authController.refresh(userId!);
+    res.cookie("refreshToken" , response.refreshToken , cookiesOptions)
 
-    return res.status(200).json({response})
+    return res.status(200).json(response)
 })
 
 
@@ -57,8 +58,10 @@ router.post("/verify-email" , validate(verifyEmailSchema) , async (request : Req
 })
 
 
-router.post("/resend-code" , authMiddleware , validate(resendCodeSchema) , async (request : Request , res : Response) => {
-    const result = await verificationController.resendCode(request.user!.id);
+router.post("/resend-code" , validate(resendCodeSchema) , async (request : Request , res : Response) => {
+    const {email} = request.body;
+
+    const result = await verificationController.resendCode(email);
 
     return res.status(200).json(result)
 })

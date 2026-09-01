@@ -11,7 +11,10 @@ export type FileListParams = {
   mimeType?: string;
   sortBy: "createdAt" | "size" | "originalName";
   sortOrder: "asc" | "desc";
+  withOwner?: boolean;
 };
+
+const ownerSelect = { select: { id: true, name: true, email: true } };
 
 export class FileRepository {
   static createMany(
@@ -32,7 +35,7 @@ export class FileRepository {
   }
 
   static findAll(params: FileListParams, client: Client = prisma) {
-    const { userId, page, limit, search, mimeType, sortBy, sortOrder } = params;
+    const { userId, page, limit, search, mimeType, sortBy, sortOrder, withOwner } = params;
 
     const where: Prisma.FileWhereInput = {
       deletedAt: null,
@@ -52,6 +55,7 @@ export class FileRepository {
         select: {
           id: true, originalName: true, mimeType: true, size: true,
           createdAt: true, userId: true,
+          ...(withOwner ? { user: ownerSelect } : {}),
         },
       }),
       client.file.count({ where }),
@@ -72,13 +76,37 @@ export class FileRepository {
     });
   }
 
+  static findKeysForUser(userId: string, client: Client = prisma) {
+    return client.file.findMany({
+      where: { userId },
+      select: { key: true },
+    });
+  }
+
+  static recent(limit: number, client: Client = prisma) {
+    return client.file.findMany({
+      where: { deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      select: {
+        id: true, originalName: true, mimeType: true, size: true,
+        createdAt: true, user: ownerSelect,
+      },
+    });
+  }
+
   static deleteByKeys(keys: string[], client: Client = prisma) {
     return client.file.deleteMany({ where: { key: { in: keys } } });
   }
 
-  static stats(userId?: string, client: Client = prisma) {
+  static stats(
+    params: { userId?: string; includeDeleted?: boolean } = {},
+    client: Client = prisma
+  ) {
+    const { userId, includeDeleted = false } = params;
+
     const where: Prisma.FileWhereInput = {
-      deletedAt: null,
+      ...(includeDeleted ? {} : { deletedAt: null }),
       ...(userId ? { userId } : {}),
     };
 

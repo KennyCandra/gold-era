@@ -1,4 +1,3 @@
-import { Role } from "@/generated/prisma/enums";
 import jwt from "jsonwebtoken";
 import { env } from "@/config";
 
@@ -9,9 +8,7 @@ const ACCESS_EXPIRY = "15m";
 const REFRESH_EXPIRY = "7d";
 
 export type TokenPayload = {
-  userId: string | null;
-  role: Role | null ;
-  verified?: boolean
+  userId: string;
 };
 
 export const generateAccessToken = (payload: TokenPayload): string => {
@@ -32,19 +29,11 @@ export const generateTokens = (payload: TokenPayload) => {
 export const verifyAccessToken = (token: string): TokenPayload => {
   const payload = jwt.verify(token, ACCESS_SECRET) as TokenPayload;
 
-  return {
-    userId: payload.userId,
-    role: payload.role,
-    verified: payload.verified ?? false,
-  };
+  return { userId: payload.userId };
 };
 
 export const verifyRefreshToken = (token: string): TokenPayload => {
   const payload = jwt.verify(token, REFRESH_SECRET) as TokenPayload;
 
-  return {
-    userId: payload.userId,
-    role: payload.role,
-    verified: payload.verified ?? false,
-  };
+  return { userId: payload.userId };
 };
