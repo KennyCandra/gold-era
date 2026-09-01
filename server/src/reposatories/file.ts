@@ -8,7 +8,7 @@ export type FileListParams = {
   page: number;
   limit: number;
   search?: string;
-  mimeType?: string;
+  mimeType?: string[];
   sortBy: "createdAt" | "size" | "originalName";
   sortOrder: "asc" | "desc";
   withOwner?: boolean;
@@ -40,7 +40,7 @@ export class FileRepository {
     const where: Prisma.FileWhereInput = {
       deletedAt: null,
       ...(userId ? { userId } : {}),
-      ...(mimeType ? { mimeType } : {}),
+      ...(mimeType && mimeType.length > 0 ? { mimeType: { in: mimeType } } : {}),
       ...(search
         ? { originalName: { contains: search, mode: "insensitive" } }
         : {}),
@@ -93,6 +93,18 @@ export class FileRepository {
         createdAt: true, user: ownerSelect,
       },
     });
+  }
+
+  static findMissingContent(client: Client = prisma) {
+    return client.file.findMany({
+      where: { deletedAt: null, content: null },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, key: true, originalName: true, mimeType: true },
+    });
+  }
+
+  static updateContent(id: string, content: string, client: Client = prisma) {
+    return client.file.update({ where: { id }, data: { content } });
   }
 
   static deleteByKeys(keys: string[], client: Client = prisma) {

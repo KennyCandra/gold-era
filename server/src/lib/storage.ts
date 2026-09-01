@@ -6,6 +6,7 @@ import { AppError } from "./AppError";
 
 export interface Storage {
   save(key: string, buffer: Buffer): Promise<void>;
+  read(key: string): Promise<Buffer | null>;
   stream(key: string): NodeJS.ReadableStream;
   delete(key: string): Promise<void>;
 }
@@ -29,6 +30,17 @@ const diskStorage = (dir: string): Storage => {
 
   return {
     save: (key, buffer) => fs.promises.writeFile(resolve(key), buffer),
+    read: async (key) => {
+      try {
+        return await fs.promises.readFile(resolve(key));
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+          return null;
+        }
+
+        throw err;
+      }
+    },
     stream: (key) => fs.createReadStream(resolve(key)),
     delete: async (key) => {
       await fs.promises.rm(resolve(key), { force: true });

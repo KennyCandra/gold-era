@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import FileRepository, { FileListParams } from "@/reposatories/file";
 import { AppError } from "@/lib/AppError";
 import { storage, buildKey } from "@/lib/storage";
+import { extractContent } from "@/lib/extract";
 
 class fileController {
   static async upload(userId: string, files: Express.Multer.File[]) {
@@ -9,19 +10,23 @@ class fileController {
       throw new AppError(400, "No files uploaded");
     }
 
-    const prepared = files.map((file) => ({
-      file,
-      key: buildKey(file.originalname),
-    }));
+    const prepared = await Promise.all(
+      files.map(async (file) => ({
+        file,
+        key: buildKey(file.originalname),
+        content: await extractContent(file.buffer, file.mimetype),
+      }))
+    );
 
     await prisma.$transaction(async (tx) => {
       await FileRepository.createMany(
-        prepared.map(({ file, key }) => ({
+        prepared.map(({ file, key, content }) => ({
           userId,
           key,
           originalName: file.originalname,
           mimeType: file.mimetype,
           size: file.size,
+          content,
         })),
         tx
       );

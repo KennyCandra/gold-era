@@ -91,9 +91,9 @@ Three models: User, VerificationCode, File. Two enums: Role, VerificationType.
 - File.key is a generated storage key, never a filesystem path and never the
   user's filename - a caller-supplied name is a path-traversal vector, and
   "path" is a disk concept that would leak into the model when S3 lands.
-- File.content is `String?`, reserved for extracted text but NOT populated yet
-  (see Key Decisions). The column exists now so adding extraction later is not
-  a migration plus a backfill of every file already uploaded.
+- File.content is `String?`, holding text extracted on upload (see Key
+  Decisions). Null is a normal value - it means the type has no extractor, or
+  the file held no text - so the frontend still renders a placeholder for it.
 - User -> Files is one-to-many
 - User -> VerificationCodes is one-to-many
 - Cascade delete on user removal applies to VerificationCode AND File. The
@@ -204,10 +204,18 @@ before the first read.
   crash then leaves a retryable row rather than an orphaned, unreferenced blob.
 - Access + refresh tokens, refresh in an httpOnly cookie (sameSite none/secure
   in production, lax in dev)
-- Content extraction is deliberately NOT implemented. The spec's "Extracted
-  content" is ambiguous against the metadata bullets beside it; the column is
-  reserved and the frontend renders a placeholder. Record this in the README's
-  "Any assumptions made" section as a scoping decision.
+- Content extraction runs on upload in `lib/extract.ts`: text/CSV/JSON/Markdown
+  (any `text/*`) decoded as UTF-8, PDF via `pdf-parse`, DOCX via `mammoth`.
+  Null for images, archives, spreadsheets and legacy `.doc` - mammoth does not
+  read `.doc`, and pretending otherwise would store garbage. Stored text is
+  capped at 50KB. `extractContent` NEVER throws: a corrupt PDF returns null
+  rather than failing the upload that carried it, which is why the try/catch
+  lives in the lib and not in the controller. Extraction happens BEFORE
+  `$transaction` - CPU work stays out of the transaction. The upload response
+  still strips `content`; only the detail endpoint returns it.
+- `npm run backfill:content` (`src/scripts/backfillContent.ts`) fills `content`
+  for rows uploaded before extraction existed. Idempotent: it only visits
+  non-deleted rows with `content IS NULL`, and skips rows whose blob is gone.
 - Multer file filter: images, PDFs, docs, spreadsheets, text, CSV, JSON, ZIP
 - 10MB file size limit
 - Max 10 files per upload request
