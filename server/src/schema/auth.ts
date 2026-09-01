@@ -23,3 +23,35 @@ export const signUpSchema = z.object({
         email : z.email()
     })
 })
+
+const codeSchema = z
+  .string()
+  .length(6, { message: 'Code must be 6 digits' })
+  .regex(/^\d+$/, { message: 'Code must contain digits only' });
+
+export const verifyEmailSchema = z.object({
+    body: z.object({
+        email : z.email(),
+        code : codeSchema
+    })
+})
+
+export const resendCodeSchema = z.object({
+    body: z.object({
+        email : z.email()
+    })
+})
+
+export const forgotPasswordSchema = z.object({
+    body: z.object({
+        email : z.email()
+    })
+})
+
+export const resetPasswordSchema = z.object({
+    body: z.object({
+        email : z.email(),
+        code : codeSchema,
+        password : passwordSchema
+    })
+})

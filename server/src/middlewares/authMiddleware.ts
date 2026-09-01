@@ -16,7 +16,8 @@ export function authMiddleware (request : Request , _response : Response , next 
 
     request.user = {
         id : verfiedToken.userId,
-        role : verfiedToken.role
+        role : verfiedToken.role,
+        verified : verfiedToken.verified ?? false
     }
 
     next()
@@ -38,9 +39,22 @@ export function refreshTokenMiddleware(req: Request , res : Response , next: Nex
 
     req.user = {
         id : verifiedToken.userId,
-        role : verifiedToken.role
+        role : verifiedToken.role,
+        verified : verifiedToken.verified ?? false
     }
 
+
+    next()
+}
+
+export function requireVerified(req: Request , _res : Response , next: NextFunction){
+    if (!req.user){
+        throw new AppError(401 , "Not Authorized")
+    }
+
+    if (!req.user.verified){
+        throw new AppError(403 , "Email not verified")
+    }
 
     next()
 }

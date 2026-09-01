@@ -4,23 +4,30 @@ import { AppError } from "@/lib/AppError";
 import { generateTokens } from "@/lib/jwt";
 import { UserCreateInput } from "@/generated/prisma/models";
 import { userWithoutPassword } from "@/lib/data";
+import { prisma } from "@/lib/prisma";
+import { VerificationType } from "@/generated/prisma/enums";
+import VerificationCodeRepository from "@/reposatories/verificationCode";
+import { generateCode, hashCode, codeExpiry } from "@/lib/otp";
+import { sendVerificationEmail } from "@/lib/email";
 
 class authController {
     static async login(email : string , password: string){
         const user = await UserRepository.findByEmail(email);
+
         if (!user){
-            throw new AppError(404 , "user not found")
+            throw new AppError(401 , "Invalid email or password")
         }
 
-        const isMatch = await bcrypt.compare(password , user?.password || "");
+        const isMatch = await bcrypt.compare(password , user.password);
 
         if (!isMatch){
-            throw new AppError(401 , "wrong password")
+            throw new AppError(401 , "Invalid email or password")
         }
 
         const payload = {
             userId : user.id,
-            role : user.role
+            role : user.role,
+            verified : user.verified
         }
 
         const tokens = generateTokens(payload)
@@ -36,13 +43,28 @@ class authController {
 
     static async register(email : string , name : string ,password : string){
         const hasedPassword = await bcrypt.hash(password , 12);
+        const code = generateCode();
 
         const userData : UserCreateInput= {
             name ,
             email,
             password : hasedPassword,
         }
-        const newUser = await UserRepository.create(userData);
+
+        const newUser = await prisma.$transaction(async (tx) => {
+            const created = await tx.user.create({ data: userData });
+
+            await VerificationCodeRepository.create({
+                userId: created.id,
+                type: VerificationType.EMAIL_VERIFICATION,
+                code: await hashCode(code),
+                expiresAt: codeExpiry(),
+            }, tx);
+
+            return created;
+        });
+
+        await sendVerificationEmail(newUser.email, code);
 
         return {newUser}
 

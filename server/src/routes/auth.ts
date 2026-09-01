@@ -1,8 +1,9 @@
 import { Router} from "express"
 import type {Response , Request} from "express"
 import authController from "../controllers/auth"
+import verificationController from "../controllers/verification"
 import { validate } from "@/middlewares/validate";
-import { loginSchema, signUpSchema } from "@/schema/auth";
+import { loginSchema, signUpSchema, verifyEmailSchema, resendCodeSchema, forgotPasswordSchema, resetPasswordSchema } from "@/schema/auth";
 import { authMiddleware, refreshTokenMiddleware } from "@/middlewares/authMiddleware";
 import { cookiesOptions } from "@/lib/cookies";
 
@@ -44,6 +45,41 @@ router.get("/refresh" , refreshTokenMiddleware , async(req : Request , res: Resp
     return res.status(200).json({response})
 })
 
+
+
+router.post("/verify-email" , validate(verifyEmailSchema) , async (request : Request , res : Response) => {
+    const {email , code} = request.body;
+
+    const result = await verificationController.verifyEmail(email , code);
+    res.cookie("refreshToken" , result.refreshToken , cookiesOptions)
+
+    return res.status(200).json(result)
+})
+
+
+router.post("/resend-code" , authMiddleware , validate(resendCodeSchema) , async (request : Request , res : Response) => {
+    const result = await verificationController.resendCode(request.user!.id);
+
+    return res.status(200).json(result)
+})
+
+
+router.post("/forgot-password" , validate(forgotPasswordSchema) , async (request : Request , res : Response) => {
+    const {email} = request.body;
+
+    const result = await verificationController.forgotPassword(email);
+
+    return res.status(200).json(result)
+})
+
+
+router.post("/reset-password" , validate(resetPasswordSchema) , async (request : Request , res : Response) => {
+    const {email , code , password} = request.body;
+
+    const result = await verificationController.resetPassword(email , code , password);
+
+    return res.status(200).json(result)
+})
 
 
 export default router;
