@@ -18,8 +18,8 @@ export function useFile(id: string) {
   return useQuery({
     queryKey: ["files", "detail", id],
     queryFn: async () => {
-      const { data } = await api.get<FileItem>(`/files/${id}`);
-      return data;
+      const { data } = await api.get<{ file: FileItem }>(`/files/${id}`);
+      return data.file;
     },
     enabled: !!id,
   });

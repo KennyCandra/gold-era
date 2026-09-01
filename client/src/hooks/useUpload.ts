@@ -94,7 +94,7 @@ export function useUpload() {
       formData.append("files", item.file);
 
       try {
-        await api.post<FileItem[]>("/files/upload", formData, {
+        await api.post<{ files: FileItem[] }>("/files/upload", formData, {
           signal: controller.signal,
           onUploadProgress: (evt: AxiosProgressEvent) => {
             const total = evt.total ?? item.file.size;
@@ -120,9 +120,6 @@ export function useUpload() {
     [queryClient, updateItem],
   );
 
-  // Drains the queue sequentially. Written as a loop rather than a recursive
-  // callback: referencing runQueue inside its own useCallback body is a
-  // temporal-dead-zone hazard and trips react-hooks/immutability.
   const runQueue = useCallback(async () => {
     if (processingRef.current) return;
     processingRef.current = true;

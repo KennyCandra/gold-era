@@ -3,9 +3,10 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import type { UserStats } from "@/lib/types";
+import { groupByFileType } from "@/lib/utils";
 
 export interface FilesByTypeChartProps {
-  data: UserStats["filesByType"];
+  data: UserStats["byType"];
 }
 
 const CATEGORY_ORDER = ["Images", "PDFs", "Documents", "Spreadsheets", "Text", "Archives"] as const;
@@ -20,7 +21,7 @@ const CATEGORY_COLOR: Record<(typeof CATEGORY_ORDER)[number], string> = {
 };
 
 export function FilesByTypeChart({ data }: FilesByTypeChartProps) {
-  const countByType = new Map(data.map((d) => [d.type, d.count]));
+  const countByType = new Map(groupByFileType(data).map((g) => [g.label, g.count]));
   const chartData = CATEGORY_ORDER.map((type) => ({ type, count: countByType.get(type) ?? 0 }));
 
   return (

@@ -8,12 +8,12 @@ export interface StatsGridProps {
 }
 
 export function StatsGrid({ stats, lastFile }: StatsGridProps) {
-  const typeCount = stats.filesByType.filter((t) => t.count > 0).length;
+  const typeCount = stats.byType.filter((t) => t.count > 0).length;
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <StatTile label="Total Files" value={stats.totalFiles} />
-      <StatTile label="Storage Used" value={formatBytes(stats.totalSize)} />
+      <StatTile label="Storage Used" value={formatBytes(stats.storageUsed)} />
       <StatTile label="File Types" value={typeCount} />
       <StatTile
         label="Last Upload"

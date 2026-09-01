@@ -37,11 +37,7 @@ function AdminFilesContent() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  // NOTE: the documented API (GET /files/all: page, limit, search, sortBy,
-  // sortOrder) has no server-side type/owner filter params, so those two
-  // filters are applied client-side over the current page's results. Owner
-  // options are likewise derived from the current page rather than a global
-  // owner list, since no such endpoint exists.
+
   const filesQuery = useAdminFiles({
     page,
     limit: PAGE_SIZE,
@@ -57,7 +53,7 @@ function AdminFilesContent() {
   const ownerOptions = useMemo(() => {
     const seen = new Map<string, string>();
     allFiles.forEach((f) => {
-      if (f.owner) seen.set(f.owner.id, f.owner.name);
+      if (f.user) seen.set(f.user.id, f.user.name);
     });
     return [
       { value: "all", label: "All owners" },
@@ -68,7 +64,7 @@ function AdminFilesContent() {
   const files = useMemo(() => {
     return allFiles.filter((f) => {
       if (typeFilter !== "all" && getFileKind(f.mimeType).group !== typeFilter) return false;
-      if (ownerFilter !== "all" && f.ownerId !== ownerFilter) return false;
+      if (ownerFilter !== "all" && f.userId !== ownerFilter) return false;
       return true;
     });
   }, [allFiles, typeFilter, ownerFilter]);

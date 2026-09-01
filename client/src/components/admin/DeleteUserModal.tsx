@@ -9,7 +9,7 @@ export interface DeleteUserModalProps {
 }
 
 export function DeleteUserModal({ user, onCancel, onConfirm, isDeleting }: DeleteUserModalProps) {
-  const fileCount = user?.fileCount ?? user?._count?.files ?? 0;
+  const fileCount = user?._count?.files ?? 0;
 
   return (
     <Modal

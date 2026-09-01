@@ -71,9 +71,9 @@ export default function FileDetailPage() {
   };
 
   const handleCopy = async () => {
-    if (!file?.extractedContent) return;
+    if (!file?.content) return;
     try {
-      await navigator.clipboard.writeText(file.extractedContent);
+      await navigator.clipboard.writeText(file.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -85,7 +85,7 @@ export default function FileDetailPage() {
     <div className="flex flex-col gap-6">
       <Link
         href="/files"
-        className="inline-flex h-[30px] w-fit items-center rounded-md px-2 text-sm text-muted transition-colors hover:bg-accent-subtle hover:text-accent-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2"
+        className="inline-flex h-7.5 w-fit items-center rounded-md px-2 text-sm text-muted transition-colors hover:bg-accent-subtle hover:text-accent-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2"
       >
         ← My Files
       </Link>
@@ -201,7 +201,7 @@ function FileDetailContent({
           value={`${formatRelative(file.createdAt)} · ${formatDate(file.createdAt)}`}
           mono
         />
-        <DetailRow label="Owner" value={file.owner?.name ?? "—"} />
+        <DetailRow label="Owner" value={file.user?.name ?? "—"} />
         <DetailRow label="MIME type" value={file.mimeType} code border={false} />
         <DetailRow label="File ID" value={file.id} code border={false} />
       </div>
@@ -236,7 +236,7 @@ function FileDetailContent({
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold leading-7">Extracted content</h2>
-            {file.extractedContent && (
+            {file.content && (
               <Button variant="ghost" onClick={onCopy} className="h-8 px-2.5">
                 {copied ? (
                   <>
@@ -250,9 +250,9 @@ function FileDetailContent({
               </Button>
             )}
           </div>
-          {file.extractedContent ? (
+          {file.content ? (
             <div className="h-80 overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-bg p-4 font-mono text-[13px] leading-5 text-muted">
-              {file.extractedContent}
+              {file.content}
             </div>
           ) : (
             <div className="flex h-80 items-center justify-center rounded-lg border border-border bg-bg p-4">

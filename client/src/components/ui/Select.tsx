@@ -99,7 +99,7 @@ export function Select({
                   setOpen(false);
                 }}
                 className={cn(
-                  'flex h-[30px] items-center rounded-md px-2 text-left text-sm',
+                  'flex h-7.5 items-center rounded-md px-2 text-left text-sm',
                   isSelected
                     ? 'bg-accent-subtle font-medium text-accent-text'
                     : 'text-muted hover:bg-bg',

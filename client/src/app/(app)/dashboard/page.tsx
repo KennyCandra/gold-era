@@ -48,8 +48,8 @@ export default function DashboardPage() {
       <StatsGrid stats={stats} lastFile={recentFiles[0]} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.35fr]">
-        <FilesByTypeChart data={stats.filesByType} />
-        <UploadHistoryChart data={stats.uploadsOverTime} />
+        <FilesByTypeChart data={stats.byType} />
+        <UploadHistoryChart data={stats.uploadHistory} />
       </div>
 
       {recentFiles.length > 0 && <RecentUploads files={recentFiles} />}

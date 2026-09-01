@@ -3,14 +3,14 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import type { UserStats } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
+import { fillUploadHistory } from "@/lib/utils";
 
 export interface UploadHistoryChartProps {
-  data: UserStats["uploadsOverTime"];
+  data: UserStats["uploadHistory"];
 }
 
 export function UploadHistoryChart({ data }: UploadHistoryChartProps) {
-  const chartData = data.map((d) => ({ count: d.count, label: formatDate(d.date) }));
+  const chartData = fillUploadHistory(data);
 
   return (
     <div className="flex flex-col gap-5 rounded-xl border border-border bg-surface p-5">

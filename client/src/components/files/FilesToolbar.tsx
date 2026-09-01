@@ -75,7 +75,7 @@ export function FilesToolbar({
           aria-pressed={view === "list"}
           onClick={() => onViewChange("list")}
           className={cn(
-            "flex h-7 w-[30px] items-center justify-center rounded-md",
+            "flex h-7 w-7.5 items-center justify-center rounded-md",
             view === "list" ? "bg-surface text-text" : "text-muted",
           )}
         >
@@ -87,7 +87,7 @@ export function FilesToolbar({
           aria-pressed={view === "grid"}
           onClick={() => onViewChange("grid")}
           className={cn(
-            "flex h-7 w-[30px] items-center justify-center rounded-md",
+            "flex h-7 w-7.5 items-center justify-center rounded-md",
             view === "grid" ? "bg-surface text-text" : "text-muted",
           )}
         >

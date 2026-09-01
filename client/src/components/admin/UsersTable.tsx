@@ -14,16 +14,7 @@ import {
 import type { Role, User } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 
-export type AdminUser = User & {
-  fileCount?: number;
-  _count?: { files?: number };
-};
-
-function fileCountOf(user: AdminUser): number | null {
-  if (typeof user.fileCount === "number") return user.fileCount;
-  if (typeof user._count?.files === "number") return user._count.files;
-  return null;
-}
+export type AdminUser = User;
 
 const ROLE_OPTIONS = [
   { value: "ADMIN", label: "Admin" },
@@ -70,7 +61,7 @@ export function UsersTable({
       <TableBody>
         {users.map((user) => {
           const isSelf = user.id === currentUserId;
-          const count = fileCountOf(user);
+          const count = user._count?.files ?? 0;
 
           return (
             <TableRow key={user.id}>
@@ -97,7 +88,7 @@ export function UsersTable({
                     onChange={(value) => onRoleChange(user, value as Role)}
                     disabled={updatingUserId === user.id}
                     aria-label={`Role for ${user.name}`}
-                    className="w-[104px]"
+                    className="w-26"
                   />
                 )}
               </TableCell>
@@ -105,7 +96,7 @@ export function UsersTable({
                 <StatusBadge status={user.verified ? "Verified" : "Pending"} />
               </TableCell>
               <TableCell align="right" className="tabular-nums text-muted">
-                {count ?? "—"}
+                {count}
               </TableCell>
               <TableCell align="right" className="tabular-nums text-subtle">
                 {formatDate(user.createdAt)}
@@ -119,13 +110,13 @@ export function UsersTable({
                     title={isSelf ? "You cannot delete your own account" : "Delete user"}
                     aria-label={`Delete ${user.name}`}
                     className={cn(
-                      "flex h-[30px] w-[30px] items-center justify-center rounded-md text-muted transition-colors",
-                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2",
+                      "flex h-7.5 w-7.5 items-center justify-center rounded-md text-muted transition-colors",
+                      "focus-visible:outline focus-visible:outline-accent-border focus-visible:outline-offset-2",
                       "disabled:cursor-not-allowed disabled:opacity-40",
                       !isSelf && "hover:bg-danger-subtle hover:text-danger",
                     )}
                   >
-                    <Trash2 className="h-[15px] w-[15px]" strokeWidth={1.5} />
+                    <Trash2 className="h-3.75 w-3.75" strokeWidth={1.5} />
                   </button>
                 </div>
               </TableCell>

@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { FileTypeBarChart } from "@/components/admin/FileTypeBarChart";
 import { RecentUploadsTable } from "@/components/admin/RecentUploadsTable";
-import { useAdminFiles, useAdminStats } from "@/hooks/useAdmin";
+import { useAdminStats } from "@/hooks/useAdmin";
 import { ErrorState, Skeleton, StatTile, TableSkeleton } from "@/components/ui";
 import { formatBytes } from "@/lib/utils";
 
@@ -13,19 +13,13 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 function AdminOverviewContent() {
   const statsQuery = useAdminStats();
-  const recentFilesQuery = useAdminFiles({
-    page: 1,
-    limit: 5,
-    sortBy: "createdAt",
-    sortOrder: "desc",
-  });
 
   const [now] = useState(() => Date.now());
 
   const newFilesThisWeek = useMemo(() => {
-    const uploadsOverTime = statsQuery.data?.uploadsOverTime ?? [];
-    return uploadsOverTime
-      .filter((d) => now - new Date(d.date).getTime() <= WEEK_MS)
+    const uploadHistory = statsQuery.data?.uploadHistory ?? [];
+    return uploadHistory
+      .filter((d) => now - new Date(d.day).getTime() <= WEEK_MS)
       .reduce((sum, d) => sum + d.count, 0);
   }, [statsQuery.data, now]);
 
@@ -53,7 +47,6 @@ function AdminOverviewContent() {
   }
 
   const stats = statsQuery.data;
-  const recentFiles = recentFilesQuery.data?.data ?? [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -61,10 +54,10 @@ function AdminOverviewContent() {
         <StatTile
           label="Total Users"
           value={stats.totalUsers}
-          delta={`${stats.verifiedUsers} verified · ${stats.pendingUsers} pending`}
+          delta={`${stats.verifiedUsers} verified · ${stats.unverifiedUsers} pending`}
         />
         <StatTile label="Total Files" value={stats.totalFiles} />
-        <StatTile label="Storage Used" value={formatBytes(stats.totalSize)} />
+        <StatTile label="Storage Used" value={formatBytes(stats.storageUsed)} />
         <StatTile
           label="New This Week"
           value={`+${newFilesThisWeek}`}
@@ -74,16 +67,16 @@ function AdminOverviewContent() {
 
       <div className="flex flex-col gap-5 rounded-xl border border-border bg-surface p-5">
         <h2 className="text-lg font-semibold leading-7">Most uploaded file types</h2>
-        {stats.filesByType.length === 0 ? (
+        {stats.byType.length === 0 ? (
           <p className="text-sm text-muted">No files uploaded yet.</p>
         ) : (
-          <FileTypeBarChart data={stats.filesByType} />
+          <FileTypeBarChart data={stats.byType} />
         )}
       </div>
 
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold leading-7">Recent uploads</h2>
-        <RecentUploadsTable files={recentFiles} isLoading={recentFilesQuery.isLoading} />
+        <RecentUploadsTable files={stats.recentUploads} />
       </div>
     </div>
   );

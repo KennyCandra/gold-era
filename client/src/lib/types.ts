@@ -8,20 +8,19 @@ export type User = {
   verified: boolean;
   createdAt: string;
   updatedAt: string;
+  _count?: { files: number };
 };
 
 export type FileItem = {
   id: string;
   originalName: string;
-  fileName: string;
   mimeType: string;
   size: number;
-  path: string;
-  extractedContent?: string | null;
-  ownerId: string;
-  owner?: Pick<User, "id" | "name" | "email">;
   createdAt: string;
-  updatedAt: string;
+  userId: string;
+  updatedAt?: string;
+  content?: string | null;
+  user?: Pick<User, "id" | "name" | "email">;
 };
 
 export type Paginated<T> = {
@@ -37,22 +36,29 @@ export type AuthResponse = {
   accessToken: string;
 };
 
+export type StatsByType = { mimeType: string; count: number; size: number };
+
+export type UploadHistoryPoint = { day: string; count: number };
+
 export type UserStats = {
   totalFiles: number;
-  totalSize: number;
-  filesByType: { type: string; count: number }[];
-  uploadsOverTime: { date: string; count: number }[];
+  storageUsed: number;
+  byType: StatsByType[];
+  uploadHistory: UploadHistoryPoint[];
 };
 
 export type AdminStats = {
   totalUsers: number;
-  totalFiles: number;
-  totalSize: number;
   verifiedUsers: number;
-  pendingUsers: number;
-  filesByType: { type: string; count: number }[];
-  uploadsOverTime: { date: string; count: number }[];
-  usersByRole: { role: Role; count: number }[];
+  unverifiedUsers: number;
+  adminUsers: number;
+  totalFiles: number;
+  storageUsed: number;
+  storageOnDisk: number;
+  deletedFiles: number;
+  byType: StatsByType[];
+  recentUploads: FileItem[];
+  uploadHistory: UploadHistoryPoint[];
 };
 
 export type SortOrder = "asc" | "desc";

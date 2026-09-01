@@ -20,9 +20,9 @@ function ProfileContent() {
 
       {statsQuery.isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Skeleton className="h-[104px] rounded-xl" />
-          <Skeleton className="h-[104px] rounded-xl" />
-          <Skeleton className="h-[104px] rounded-xl" />
+          <Skeleton className="h-26 rounded-xl" />
+          <Skeleton className="h-26 rounded-xl" />
+          <Skeleton className="h-26 rounded-xl" />
         </div>
       ) : statsQuery.isError || !statsQuery.data ? (
         <ErrorState
@@ -32,7 +32,7 @@ function ProfileContent() {
       ) : (
         <ProfileStats
           filesUploaded={statsQuery.data.totalFiles}
-          storageBytes={statsQuery.data.totalSize}
+          storageBytes={statsQuery.data.storageUsed}
           verified={user.verified}
         />
       )}

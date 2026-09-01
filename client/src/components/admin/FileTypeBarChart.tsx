@@ -2,20 +2,20 @@
 
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
-import { getFileKind } from "@/lib/utils";
+import { groupByFileType } from "@/lib/utils";
+import type { StatsByType } from "@/lib/types";
 
 export interface FileTypeBarChartProps {
-  data: { type: string; count: number }[];
+  data: StatsByType[];
   className?: string;
 }
 
 export function FileTypeBarChart({ data, className }: FileTypeBarChartProps) {
-  const chartData = [...data]
-    .sort((a, b) => b.count - a.count)
-    .map((d) => {
-      const kind = getFileKind(d.type);
-      return { name: kind.group, count: d.count, colorVar: kind.colorVar };
-    });
+  const chartData = groupByFileType(data).map((g) => ({
+    name: g.label,
+    count: g.count,
+    colorVar: g.colorToken,
+  }));
 
   const height = Math.max(160, chartData.length * 38);
 

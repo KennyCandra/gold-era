@@ -112,8 +112,8 @@ export function FileTable({
               {showOwner && (
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Avatar name={file.owner?.name ?? "Unknown"} size="sm" />
-                    <span className="truncate text-sm">{file.owner?.name ?? "Unknown"}</span>
+                    <Avatar name={file.user?.name ?? "Unknown"} size="sm" />
+                    <span className="truncate text-sm">{file.user?.name ?? "Unknown"}</span>
                   </div>
                 </TableCell>
               )}
@@ -137,7 +137,7 @@ export function FileTable({
                       e.stopPropagation();
                       onDownload?.(file);
                     }}
-                    className="flex h-[30px] w-[30px] items-center justify-center rounded-md text-muted transition-colors hover:bg-accent-subtle hover:text-accent-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2"
+                    className="flex h-7.5 w-7.5 items-center justify-center rounded-md text-muted transition-colors hover:bg-accent-subtle hover:text-accent-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2"
                   >
                     <Download className="h-[15px] w-[15px]" strokeWidth={1.5} />
                   </button>
@@ -148,7 +148,7 @@ export function FileTable({
                       e.stopPropagation();
                       onDelete?.(file);
                     }}
-                    className="flex h-[30px] w-[30px] items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2"
+                    className="flex h-7.5 w-7.5 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2"
                   >
                     <Trash2 className="h-[15px] w-[15px]" strokeWidth={1.5} />
                   </button>

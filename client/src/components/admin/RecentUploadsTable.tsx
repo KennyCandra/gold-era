@@ -63,8 +63,8 @@ export function RecentUploadsTable({ files, isLoading }: RecentUploadsTableProps
             </TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
-                <Avatar name={f.owner?.name ?? "Unknown"} size="sm" />
-                <span className="truncate text-muted">{f.owner?.name ?? "Unknown"}</span>
+                <Avatar name={f.user?.name ?? "Unknown"} size="sm" />
+                <span className="truncate text-muted">{f.user?.name ?? "Unknown"}</span>
               </div>
             </TableCell>
             <TableCell align="right" className="tabular-nums text-muted">

@@ -38,8 +38,8 @@ export function useUpdateUserRole() {
 
   return useMutation({
     mutationFn: async ({ id, role }: { id: string; role: Role }) => {
-      const { data } = await api.patch<User>(`/users/${id}`, { role });
-      return data;
+      const { data } = await api.patch<{ user: User }>(`/users/${id}`, { role });
+      return data.user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "list"] });

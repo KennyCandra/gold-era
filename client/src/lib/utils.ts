@@ -108,3 +108,71 @@ export function getFileKind(mimeOrExt: string): FileKind {
 
   return EXT_TO_KIND[ext] ?? DEFAULT_KIND;
 }
+
+export type StatsByTypeRow = { mimeType: string; count: number; size: number };
+
+export type GroupedTypeStat = {
+  label: string;
+  count: number;
+  size: number;
+  colorToken: string;
+};
+
+export function groupByFileType(rows: StatsByTypeRow[]): GroupedTypeStat[] {
+  const byGroup = new Map<string, GroupedTypeStat>();
+
+  for (const row of rows) {
+    const kind = getFileKind(row.mimeType);
+    const existing = byGroup.get(kind.group);
+    if (existing) {
+      existing.count += row.count;
+      existing.size += row.size;
+    } else {
+      byGroup.set(kind.group, {
+        label: kind.group,
+        count: row.count,
+        size: row.size,
+        colorToken: kind.colorVar,
+      });
+    }
+  }
+
+  return Array.from(byGroup.values()).sort((a, b) => b.count - a.count);
+}
+
+export function formatChartDay(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+export type UploadHistoryRow = { day: string; count: number };
+export type ChartUploadHistoryPoint = { label: string; count: number };
+
+export function fillUploadHistory(
+  rows: UploadHistoryRow[],
+  days = 30
+): ChartUploadHistoryPoint[] {
+  const countsByDay = new Map<string, number>();
+  for (const row of rows) {
+    const d = new Date(row.day);
+    if (Number.isNaN(d.getTime())) continue;
+    countsByDay.set(d.toISOString().slice(0, 10), row.count);
+  }
+
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  const points: ChartUploadHistoryPoint[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    points.push({
+      label: formatChartDay(d.toISOString()),
+      count: countsByDay.get(key) ?? 0,
+    });
+  }
+
+  return points;
+}
