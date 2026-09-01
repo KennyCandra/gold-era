@@ -58,7 +58,11 @@ class authController {
             return created;
         });
 
-        await sendVerificationEmail(newUser.email, code);
+        try {
+            await sendVerificationEmail(newUser.email, code);
+        } catch (err) {
+            console.error("register: sendVerificationEmail failed", { userId: newUser.id, email: newUser.email, err });
+        }
 
         return {newUser}
 

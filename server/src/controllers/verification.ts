@@ -95,7 +95,11 @@ class verificationController {
     }
 
     const code = await issueCode(user.id, VerificationType.EMAIL_VERIFICATION);
-    await sendVerificationEmail(user.email, code);
+    try {
+      await sendVerificationEmail(user.email, code);
+    } catch (err) {
+      console.error("resendCode: sendVerificationEmail failed", { userId: user.id, email: user.email, err });
+    }
 
     return { message };
   }
@@ -120,7 +124,13 @@ class verificationController {
     }
 
     const code = await issueCode(user.id, VerificationType.PASSWORD_RESET);
-    await sendPasswordResetEmail(user.email, code);
+    try {
+      await sendPasswordResetEmail(user.email, code);
+    } catch (err) {
+      // Anti-enumeration: this endpoint always returns a generic 200, so a send
+      // failure must not surface - it would leak whether the email exists.
+      console.error("forgotPassword: sendPasswordResetEmail failed", { userId: user.id, email: user.email, err });
+    }
 
     return { message };
   }

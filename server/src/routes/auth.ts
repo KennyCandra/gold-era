@@ -14,9 +14,10 @@ router.post("/login" , validate(loginSchema), async (request : Request , res : R
     const {email , password} = request.body;
 
     const newResponse = await authController.login(email , password);
-    res.cookie("refreshToken" , newResponse.refreshToken , cookiesOptions)
+    const { refreshToken, ...body } = newResponse;
+    res.cookie("refreshToken" , refreshToken , cookiesOptions)
 
-    return res.status(200).json(newResponse)
+    return res.status(200).json(body)
 })
 
 
@@ -41,9 +42,10 @@ router.get("/refresh" , refreshTokenMiddleware , async(req : Request , res: Resp
     const userId = req.user?.id;
 
     const response = await authController.refresh(userId!);
-    res.cookie("refreshToken" , response.refreshToken , cookiesOptions)
+    const { refreshToken, ...body } = response;
+    res.cookie("refreshToken" , refreshToken , cookiesOptions)
 
-    return res.status(200).json(response)
+    return res.status(200).json(body)
 })
 
 
@@ -52,9 +54,10 @@ router.post("/verify-email" , validate(verifyEmailSchema) , async (request : Req
     const {email , code} = request.body;
 
     const result = await verificationController.verifyEmail(email , code);
-    res.cookie("refreshToken" , result.refreshToken , cookiesOptions)
+    const { refreshToken, ...body } = result;
+    res.cookie("refreshToken" , refreshToken , cookiesOptions)
 
-    return res.status(200).json(result)
+    return res.status(200).json(body)
 })
 
 
