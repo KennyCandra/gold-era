@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Check, Circle } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { Button, Input } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { PASSWORD_RULES, passwordScore, validatePassword } from "@/lib/password";
 import type { ApiError } from "@/lib/types";
 
 type FieldErrors = {
@@ -36,13 +37,58 @@ function Logo() {
   );
 }
 
-function getPasswordStrength(password: string): 0 | 1 | 2 | 3 {
-  if (!password) return 0;
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
-  if (/[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password)) score++;
-  return Math.min(score, 3) as 0 | 1 | 2 | 3;
+/**
+ * The meter is the policy, nothing else: one filled segment per satisfied rule.
+ * A password only reaches full when every rule the server enforces is met.
+ */
+function PasswordChecklist({ password }: { password: string }) {
+  const score = passwordScore(password);
+
+  return (
+    <div className="mt-0.5 flex flex-col gap-1">
+      <div className="flex gap-1.5" aria-hidden="true">
+        {PASSWORD_RULES.map((rule, index) => (
+          <span
+            key={rule.id}
+            className={cn(
+              "h-1 flex-1 rounded-full transition-colors motion-reduce:transition-none",
+              index < score
+                ? score <= 1
+                  ? "bg-danger"
+                  : score < PASSWORD_RULES.length
+                    ? "bg-accent"
+                    : "bg-success"
+                : "bg-border",
+            )}
+          />
+        ))}
+      </div>
+
+      <ul className="flex flex-col gap-1">
+        {PASSWORD_RULES.map((rule) => {
+          const met = rule.test(password);
+
+          return (
+            <li
+              key={rule.id}
+              className={cn(
+                "flex items-center gap-1 text-[13px] leading-[18px] transition-colors motion-reduce:transition-none",
+                met ? "text-success" : "text-muted",
+              )}
+            >
+              {met ? (
+                <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+              ) : (
+                <Circle className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+              )}
+              <span>{rule.label}</span>
+              <span className="sr-only">{met ? " — met" : " — not met yet"}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
 
 export default function RegisterPage() {
@@ -56,15 +102,16 @@ export default function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const strength = useMemo(() => getPasswordStrength(password), [password]);
-
   function validate(): boolean {
     const errors: FieldErrors = {};
     if (!name.trim()) errors.name = "Name is required";
     if (!email.trim()) errors.email = "Email is required";
     else if (!/^\S+@\S+\.\S+$/.test(email)) errors.email = "Enter a valid email";
     if (!password) errors.password = "Password is required";
-    else if (password.length < 8) errors.password = "At least 8 characters";
+    else {
+      const passwordError = validatePassword(password);
+      if (passwordError) errors.password = passwordError;
+    }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -161,28 +208,7 @@ export default function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             error={fieldErrors.password}
           />
-          <div className="mt-0.5 flex gap-1.5">
-            {[1, 2, 3].map((segment) => (
-              <span
-                key={segment}
-                className={cn(
-                  "h-1 flex-1 rounded-full",
-                  segment <= strength
-                    ? strength === 1
-                      ? "bg-danger"
-                      : strength === 2
-                        ? "bg-accent"
-                        : "bg-success"
-                    : "bg-border",
-                )}
-              />
-            ))}
-          </div>
-          {!fieldErrors.password && (
-            <span className="text-[13px] leading-[18px] text-subtle">
-              At least 8 characters
-            </span>
-          )}
+          <PasswordChecklist password={password} />
         </div>
 
         <Button type="submit" loading={loading} className="w-full">

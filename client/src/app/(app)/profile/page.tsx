@@ -1,8 +1,9 @@
 "use client";
 
+import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileStats } from "@/components/profile/ProfileStats";
-import { Button, ErrorState, Skeleton } from "@/components/ui";
+import { ErrorState, Skeleton } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserStats } from "@/hooks/useStats";
 
@@ -37,15 +38,7 @@ function ProfileContent() {
         />
       )}
 
-      <div>
-        <Button
-          variant="secondary"
-          disabled
-          title="Password changes aren't available yet — this feature is not part of the current API."
-        >
-          Change password
-        </Button>
-      </div>
+      <ChangePasswordForm />
     </div>
   );
 }

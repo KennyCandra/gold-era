@@ -47,6 +47,13 @@ export class UserRepository {
     });
   }
 
+  static updatePassword(id: string, password: string) {
+    return prisma.user.update({
+      where: { id },
+      data: { password },
+    });
+  }
+
   static updateRole(id: string, role: Role) {
     return prisma.user.update({
       where: { id },

@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   BarChart3,
+  ChevronUp,
   Files,
   FolderKanban,
   LayoutGrid,
@@ -16,6 +18,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { Avatar } from "@/components/ui";
 import { RoleBadge } from "@/components/ui";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -118,9 +121,36 @@ export function NavLink({
   );
 }
 
+function useDismissable(
+  active: boolean,
+  ref: React.RefObject<HTMLElement | null>,
+  onClose: () => void,
+) {
+  useEffect(() => {
+    if (!active) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [active, ref, onClose]);
+}
+
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
+
+  useDismissable(menuOpen, menuRef, () => setMenuOpen(false));
 
   return (
     <aside className="sticky top-0 hidden h-screen w-16 shrink-0 flex-col border-r border-border bg-surface md:flex lg:w-60">
@@ -174,17 +204,76 @@ export function Sidebar() {
       </nav>
 
       {user && (
-        <div className="mt-auto flex items-center gap-2.5 px-4 py-5 lg:px-5">
-          <Avatar name={user.name} />
-          <div className="hidden min-w-0 flex-col lg:flex">
-            <span className="truncate text-[13px] font-medium leading-4.5">
-              {user.name}
-            </span>
-            <RoleBadge
-              role={user.role === "ADMIN" ? "Admin" : "User"}
-              className="mt-0.5 w-fit"
+        <div className="relative mt-auto px-2 py-4 lg:px-3" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label="Account menu"
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-bg",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2",
+              menuOpen && "bg-bg",
+            )}
+          >
+            <Avatar name={user.name} />
+            <div className="hidden min-w-0 flex-1 flex-col lg:flex">
+              <span className="truncate text-[13px] font-medium leading-4.5">
+                {user.name}
+              </span>
+              <RoleBadge
+                role={user.role === "ADMIN" ? "Admin" : "User"}
+                className="mt-0.5 w-fit"
+              />
+            </div>
+            <ChevronUp
+              className={cn(
+                "hidden h-3.5 w-3.5 shrink-0 text-muted transition-transform lg:block",
+                menuOpen && "rotate-180",
+              )}
+              strokeWidth={1.5}
             />
-          </div>
+          </button>
+
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                role="menu"
+                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 4 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                style={{ transformOrigin: "bottom left" }}
+                className="absolute bottom-[calc(100%+8px)] left-0 z-30 flex w-[200px] flex-col gap-0.5 rounded-xl border border-border bg-raised p-1.5 shadow-[var(--shadow)]"
+              >
+                <Link
+                  href="/profile"
+                  role="menuitem"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex h-[34px] items-center rounded-md px-2.5 text-sm text-text transition-colors hover:bg-accent-subtle hover:text-accent-text"
+                >
+                  Profile
+                </Link>
+                <div className="flex h-10 items-center justify-between rounded-md pl-2.5 pr-0.5 text-sm text-text">
+                  <span>Theme</span>
+                  <ThemeToggle />
+                </div>
+                <div className="my-1 h-px bg-border" />
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    logout();
+                  }}
+                  className="flex h-[34px] items-center rounded-md px-2.5 text-left text-sm text-text transition-colors hover:bg-accent-subtle hover:text-accent-text"
+                >
+                  Sign out
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </aside>

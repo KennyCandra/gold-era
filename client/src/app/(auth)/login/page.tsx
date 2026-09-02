@@ -132,9 +132,12 @@ export default function LoginPage() {
             error={fieldErrors.password}
           />
           <div className="flex justify-end">
-            <Button variant="ghost" type="button" className="h-auto px-0 text-[13px] font-normal text-accent-text hover:bg-transparent hover:underline">
+            <Link
+              href="/forgot-password"
+              className="inline-flex items-center justify-center gap-2 rounded-lg text-[13px] font-normal text-accent-text transition-colors hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border focus-visible:outline-offset-2"
+            >
               Forgot password?
-            </Button>
+            </Link>
           </div>
         </div>
 

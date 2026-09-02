@@ -1,17 +1,18 @@
 import * as z from "zod";
-const userNameValidation = z.string().min(3, "minmum length for password is 8 charachters").max(16 , "maximun numbers of characters is 16");
-const passwordSchema = z
+const userNameValidation = z.string().min(3, "Name must be at least 3 characters").max(16 , "Name cannot exceed 16 characters");
+
+export const passwordSchema = z
   .string()
-  .min(8, { message: 'Password must be at least 8 characters long' })
-  .max(100, { message: 'Password cannot exceed 100 characters' })
+  .min(8, { message: 'Password must be at least 8 characters' })
   .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
   .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
   .regex(/[0-9]/, { message: 'Password must contain at least one number' })
 
+
 export const loginSchema = z.object({
     body: z.object({
         email : z.email(),
-        password : passwordSchema
+        password : z.string().min(1, "Password is required")
     })
 })
 
@@ -52,5 +53,15 @@ export const resetPasswordSchema = z.object({
         email : z.email(),
         code : codeSchema,
         password : passwordSchema
+    })
+})
+
+export const changePasswordSchema = z.object({
+    body: z.object({
+        currentPassword : z.string().min(1, { message: 'Current password is required' }),
+        newPassword : passwordSchema
+    }).refine((data) => data.newPassword !== data.currentPassword, {
+        message: 'New password must be different from the current password',
+        path: ['newPassword']
     })
 })

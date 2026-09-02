@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Avatar, RoleBadge } from "@/components/ui";
@@ -11,6 +12,7 @@ import {
   NavLink,
   PRIMARY_NAV_ITEMS,
 } from "@/components/layout/Sidebar";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 
 export interface MobileDrawerProps {
@@ -20,7 +22,7 @@ export interface MobileDrawerProps {
 
 export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
   const pathname = usePathname();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
 
   useEffect(() => {
     if (!open) return;
@@ -110,17 +112,41 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
             </nav>
 
             {user && (
-              <div className="mt-auto flex items-center gap-2.5 px-5 py-5">
-                <Avatar name={user.name} />
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-[13px] font-medium leading-[18px]">
-                    {user.name}
-                  </span>
-                  <RoleBadge
-                    role={user.role === "ADMIN" ? "Admin" : "User"}
-                    className="mt-0.5 w-fit"
-                  />
+              <div className="mt-auto border-t border-border px-3 py-3">
+                <div className="flex items-center gap-2.5 px-2.5 py-2">
+                  <Avatar name={user.name} />
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-[13px] font-medium leading-[18px]">
+                      {user.name}
+                    </span>
+                    <RoleBadge
+                      role={user.role === "ADMIN" ? "Admin" : "User"}
+                      className="mt-0.5 w-fit"
+                    />
+                  </div>
                 </div>
+
+                <Link
+                  href="/profile"
+                  onClick={onClose}
+                  className="flex h-9 items-center rounded-lg px-2.5 text-sm font-medium text-muted transition-colors hover:bg-bg hover:text-text"
+                >
+                  Profile
+                </Link>
+                <div className="flex h-10 items-center justify-between rounded-lg pl-2.5 pr-0.5 text-sm font-medium text-muted">
+                  <span>Theme</span>
+                  <ThemeToggle />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    logout();
+                  }}
+                  className="flex h-9 w-full items-center rounded-lg px-2.5 text-left text-sm font-medium text-muted transition-colors hover:bg-bg hover:text-text"
+                >
+                  Sign out
+                </button>
               </div>
             )}
           </motion.aside>

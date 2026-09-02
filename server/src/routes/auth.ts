@@ -3,7 +3,7 @@ import type {Response , Request} from "express"
 import authController from "../controllers/auth"
 import verificationController from "../controllers/verification"
 import { validate } from "@/middlewares/validate";
-import { loginSchema, signUpSchema, verifyEmailSchema, resendCodeSchema, forgotPasswordSchema, resetPasswordSchema } from "@/schema/auth";
+import { loginSchema, signUpSchema, verifyEmailSchema, resendCodeSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from "@/schema/auth";
 import { authMiddleware, refreshTokenMiddleware } from "@/middlewares/authMiddleware";
 import { cookiesOptions } from "@/lib/cookies";
 
@@ -35,6 +35,16 @@ router.get("/profile", authMiddleware  , async (request , res) => {
     const userData = await authController.fetchUserData(userId!);
 
     return res.status(200).json({user: userData})
+});
+
+
+router.patch("/change-password" , authMiddleware , validate(changePasswordSchema) , async (request : Request , res : Response) => {
+    const userId = request.user?.id;
+    const {currentPassword , newPassword} = request.body;
+
+    const result = await authController.changePassword(userId! , currentPassword , newPassword);
+
+    return res.status(200).json(result)
 });
 
 

@@ -27,6 +27,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+
+function toFieldErrors(data: unknown): Record<string, string[]> | undefined {
+  if (!Array.isArray(data)) return undefined;
+
+  const errors: Record<string, string[]> = {};
+  for (const issue of data) {
+    if (!issue || typeof issue !== "object") continue;
+    const { field, message } = issue as { field?: unknown; message?: unknown };
+    if (typeof message !== "string") continue;
+    const key =
+      typeof field === "string" ? field.split(".").pop() || field : "_";
+    (errors[key] ??= []).push(message);
+  }
+
+  return Object.keys(errors).length > 0 ? errors : undefined;
+}
+
 let refreshPromise: Promise<string> | null = null;
 
 function refreshAccessToken(): Promise<string> {
@@ -73,10 +90,19 @@ api.interceptors.response.use(
       }
     }
 
+    const fieldErrors = error.response?.data?.errors ?? toFieldErrors(error.response?.data);
+    const firstFieldMessage = fieldErrors
+      ? Object.values(fieldErrors)[0]?.[0]
+      : undefined;
+
     const normalized: ApiError = {
-      message: backendMessage ?? error.message ?? "Something went wrong",
+      message:
+        backendMessage ??
+        firstFieldMessage ??
+        error.message ??
+        "Something went wrong",
       statusCode: status,
-      errors: error.response?.data?.errors,
+      errors: fieldErrors,
     };
 
     return Promise.reject(normalized);

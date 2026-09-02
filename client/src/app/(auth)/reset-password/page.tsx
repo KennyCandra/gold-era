@@ -10,6 +10,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AnimatePresence,
@@ -17,10 +18,10 @@ import {
   useAnimationControls,
   useReducedMotion,
 } from "framer-motion";
-import { AlertCircle, MailOpen } from "lucide-react";
+import { AlertCircle, ArrowLeft, KeyRound } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import {
   CODE_LENGTH,
   OtpInput,
@@ -34,11 +35,28 @@ import {
   formatCountdown,
 } from "@/components/auth/ResendRing";
 import { useAuth } from "@/hooks/useAuth";
+import { PASSWORD_HINT, validatePassword } from "@/lib/password";
 import type { ApiError } from "@/lib/types";
 
 const SUCCESS_REDIRECT_MS = 1100;
 
-function MailBadge() {
+type FieldErrors = {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+};
+
+/** Applies the shared policy so a weak password never round-trips. */
+function validateNewPassword(password: string): string | undefined {
+  if (!password) return "Password is required";
+  return validatePassword(password) ?? undefined;
+}
+
+function isValidEmail(email: string): boolean {
+  return /^\S+@\S+\.\S+$/.test(email);
+}
+
+function KeyBadge() {
   const reduceMotion = useReducedMotion();
 
   return (
@@ -58,7 +76,7 @@ function MailBadge() {
         transition={{ type: "spring", stiffness: 380, damping: 22 }}
         className="relative flex h-12 w-12 items-center justify-center rounded-full bg-accent-subtle"
       >
-        <MailOpen className="h-5 w-5 text-accent-text" strokeWidth={1.8} aria-hidden="true" />
+        <KeyRound className="h-5 w-5 text-accent-text" strokeWidth={1.8} aria-hidden="true" />
       </motion.div>
     </div>
   );
@@ -100,26 +118,34 @@ function SuccessCheck() {
         </svg>
       </div>
       <div className="flex flex-col items-center gap-1">
-        <span className="text-lg font-semibold text-text">Email verified</span>
-        <span className="text-sm text-muted">Taking you to your dashboard…</span>
+        <span className="text-lg font-semibold text-text">Password updated</span>
+        <span className="text-sm text-muted">Taking you to sign in…</span>
       </div>
     </motion.div>
   );
 }
 
-function VerifyEmailForm() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { verifyEmail, resendCode } = useAuth();
+  const { forgotPassword, resetPassword } = useAuth();
   const reduceMotion = useReducedMotion();
   const shakeControls = useAnimationControls();
 
-  const email = searchParams.get("email") ?? "";
+  const emailFromQuery = searchParams.get("email") ?? "";
+  // Landing here without the query param (a bookmark, a stripped link) is not a
+  // dead end — the address just becomes an editable field.
+  const [email, setEmail] = useState(emailFromQuery);
+  const emailIsEditable = !emailFromQuery;
 
   const [digits, setDigits] = useState<string[]>(emptyOtpDigits);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [error, setError] = useState<string | null>(null);
+  const [codeInvalid, setCodeInvalid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [verified, setVerified] = useState(false);
+  const [done, setDone] = useState(false);
   const [resending, setResending] = useState(false);
   const [expiresIn, setExpiresIn] = useState(CODE_EXPIRY_SECONDS);
   const [cooldown, setCooldown] = useState(0);
@@ -159,31 +185,87 @@ function VerifyEmailForm() {
     otpRef.current?.focus(0);
   }, []);
 
+  function validate(): boolean {
+    const errors: FieldErrors = {};
+
+    if (!email.trim()) errors.email = "Email is required";
+    else if (!isValidEmail(email)) errors.email = "Enter a valid email";
+
+    const passwordError = validateNewPassword(password);
+    if (passwordError) errors.password = passwordError;
+    else if (password !== confirmPassword)
+      errors.confirmPassword = "Passwords do not match";
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  /**
+   * 401 (unknown user / wrong code) and 410 (expired) both land on the code
+   * boxes; 400 carries per-field zod messages we can place precisely.
+   */
+  function applyApiError(apiErr: ApiError) {
+    const errors = apiErr.errors;
+
+    if (errors) {
+      const next: FieldErrors = {};
+      if (errors.email?.[0]) next.email = errors.email[0];
+      if (errors.password?.[0]) next.password = errors.password[0];
+      setFieldErrors(next);
+
+      if (errors.code?.[0]) {
+        setError(errors.code[0]);
+        setCodeInvalid(true);
+        shake();
+        return;
+      }
+      if (Object.keys(next).length > 0) return;
+    }
+
+    setError(apiErr.message || "Could not reset your password. Try again.");
+    if (apiErr.statusCode === 401 || apiErr.statusCode === 410) {
+      setCodeInvalid(true);
+      shake();
+      clearCode();
+    }
+  }
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!isComplete || submitting || verified) return;
+    if (submitting || done) return;
+
+    setError(null);
+    setCodeInvalid(false);
+
+    if (!validate()) return;
+
+    if (!isComplete) {
+      setError("Enter the 6-digit code from your email.");
+      setCodeInvalid(true);
+      shake();
+      return;
+    }
 
     if (isExpired) {
       setError("This code has expired. Request a new one.");
+      setCodeInvalid(true);
       shake();
       return;
     }
 
     setSubmitting(true);
-    setError(null);
     try {
-      await verifyEmail(email, code);
-      setVerified(true);
-      toast.success("Email verified");
-      window.setTimeout(() => {
-        router.replace("/dashboard");
-      }, reduceMotion ? 0 : SUCCESS_REDIRECT_MS);
+      await resetPassword(email, code, password);
+      setDone(true);
+      toast.success("Password updated, sign in with your new password");
+      window.setTimeout(
+        () => {
+          router.push("/login");
+        },
+        reduceMotion ? 0 : SUCCESS_REDIRECT_MS
+      );
     } catch (err) {
-      const message =
-        (err as ApiError)?.message ?? "Verification failed. Try again.";
-      setError(message);
-      shake();
-      clearCode();
+      applyApiError(err as ApiError);
     } finally {
       setSubmitting(false);
     }
@@ -191,17 +273,23 @@ function VerifyEmailForm() {
 
   const handleResend = async () => {
     if (cooldown > 0 || resending) return;
+
+    if (!email.trim() || !isValidEmail(email)) {
+      setFieldErrors((prev) => ({ ...prev, email: "Enter a valid email" }));
+      return;
+    }
+
     setResending(true);
     setError(null);
+    setCodeInvalid(false);
     try {
-      await resendCode(email);
-      toast.success("A new code is on its way");
+      const message = await forgotPassword(email);
+      toast.success(message || "A new code is on its way");
       setCooldown(RESEND_COOLDOWN_SECONDS);
       setExpiresIn(CODE_EXPIRY_SECONDS);
       clearCode();
     } catch (err) {
-      const message =
-        (err as ApiError)?.message ?? "Could not resend the code.";
+      const message = (err as ApiError)?.message ?? "Could not resend the code.";
       setError(message);
       toast.error(message);
     } finally {
@@ -224,7 +312,7 @@ function VerifyEmailForm() {
       noValidate
     >
       <AnimatePresence mode="wait" initial={false}>
-        {verified ? (
+        {done ? (
           <SuccessCheck key="success" />
         ) : (
           <motion.div
@@ -234,16 +322,16 @@ function VerifyEmailForm() {
             className="flex flex-col gap-6"
           >
             <div className="flex flex-col gap-3 text-center">
-              <MailBadge />
-              <h1 className="text-3xl font-semibold text-text">Check your email</h1>
+              <KeyBadge />
+              <h1 className="text-3xl font-semibold text-text">Set a new password</h1>
               <p className="text-sm text-muted">
-                {email ? (
+                {emailFromQuery ? (
                   <>
-                    We sent a 6-digit code to{" "}
-                    <span className="font-medium text-text">{email}</span>
+                    Enter the 6-digit code we sent to{" "}
+                    <span className="font-medium text-text">{emailFromQuery}</span>
                   </>
                 ) : (
-                  "Enter the 6-digit code we sent to your email."
+                  "Enter your email, the 6-digit code we sent you, and a new password."
                 )}
               </p>
             </div>
@@ -268,16 +356,40 @@ function VerifyEmailForm() {
               ) : null}
             </AnimatePresence>
 
+            {emailIsEditable && (
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="ahmed@example.com"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                  }}
+                  error={fieldErrors.email}
+                />
+              </div>
+            )}
+
             <OtpInput
               ref={otpRef}
               digits={digits}
               onChange={(next, source) => {
                 setDigits(next);
                 // Backspacing over a rejected code keeps the reason on screen.
-                if (source !== "erase") setError(null);
+                if (source !== "erase") {
+                  setError(null);
+                  setCodeInvalid(false);
+                }
               }}
-              invalid={!!error}
+              invalid={codeInvalid}
               shakeControls={shakeControls}
+              autoFocus={!emailIsEditable}
             />
 
             <p className="text-center text-sm text-muted tabular">
@@ -288,13 +400,52 @@ function VerifyEmailForm() {
               )}
             </p>
 
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="password" className="text-sm font-medium">
+                New password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                }}
+                error={fieldErrors.password}
+              />
+              {!fieldErrors.password && (
+                <span className="text-[13px] leading-[18px] text-subtle">
+                  {PASSWORD_HINT}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="confirmPassword" className="text-sm font-medium">
+                Confirm new password
+              </label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                }}
+                error={fieldErrors.confirmPassword}
+              />
+            </div>
+
             <Button
               type="submit"
               loading={submitting}
-              disabled={!isComplete}
+              disabled={!isComplete || !password || !confirmPassword}
               className="w-full"
             >
-              Verify
+              Reset password
             </Button>
 
             <Button
@@ -314,6 +465,16 @@ function VerifyEmailForm() {
                 "Resend code"
               )}
             </Button>
+
+            <p className="text-center text-[13px] leading-4.5 text-muted">
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 text-accent-text hover:underline"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden="true" />
+                Back to sign in
+              </Link>
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -321,7 +482,7 @@ function VerifyEmailForm() {
   );
 }
 
-export default function VerifyEmailPage() {
+export default function ResetPasswordPage() {
   // useSearchParams requires a Suspense boundary or the production build fails.
   return (
     <Suspense
@@ -332,7 +493,7 @@ export default function VerifyEmailPage() {
         />
       }
     >
-      <VerifyEmailForm />
+      <ResetPasswordForm />
     </Suspense>
   );
 }

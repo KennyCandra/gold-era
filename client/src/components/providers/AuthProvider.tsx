@@ -24,6 +24,8 @@ export type AuthContextValue = {
   register: (name: string, email: string, password: string) => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<void>;
   resendCode: (email: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<string>;
+  resetPassword: (email: string, code: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -114,6 +116,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await api.post("/auth/resend-code", { email });
   }, []);
 
+
+  const forgotPassword = useCallback(async (email: string) => {
+    const res = await api.post<{ message: string }>("/auth/forgot-password", {
+      email,
+    });
+    return res.data.message;
+  }, []);
+
+  const resetPassword = useCallback(
+    async (email: string, code: string, password: string) => {
+      await api.post("/auth/reset-password", { email, code, password });
+    },
+    []
+  );
+
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout");
@@ -134,9 +151,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       verifyEmail,
       resendCode,
+      forgotPassword,
+      resetPassword,
       logout,
     }),
-    [user, isLoading, login, register, verifyEmail, resendCode, logout]
+    [
+      user,
+      isLoading,
+      login,
+      register,
+      verifyEmail,
+      resendCode,
+      forgotPassword,
+      resetPassword,
+      logout,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

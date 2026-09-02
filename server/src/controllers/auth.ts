@@ -79,6 +79,26 @@ class authController {
     }
 
 
+    static async changePassword(userId : string , currentPassword : string , newPassword : string){
+        const user = await UserRepository.findById(userId);
+
+        if (!user){
+            throw new AppError(404 , "user not found")
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword , user.password);
+
+        if (!isMatch){
+            throw new AppError(400 , "Current password is incorrect")
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword , 12);
+        await UserRepository.updatePassword(user.id , hashedPassword);
+
+        return { message: "Password updated" }
+    }
+
+
     static async refresh(userId : string){
         const user = await UserRepository.findById(userId);
 
