@@ -149,9 +149,6 @@ export default function RegisterPage() {
         <h1 className="text-3xl font-semibold leading-9 tracking-[-0.02em]">
           Create your account
         </h1>
-        <p className="text-[13px] leading-4.5 text-muted">
-          Free while you&apos;re under 5 GB
-        </p>
       </div>
 
       {formError && (

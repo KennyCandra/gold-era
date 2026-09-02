@@ -32,5 +32,4 @@ export const env = {
   gmailPass: process.env.GMAIL_PASS ?? "",
   uploadDir: process.env.UPLOAD_DIR ?? "./uploads",
   maxFileSize: Number(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024,
-  maxFilesPerUpload: Number(process.env.MAX_FILES_PER_UPLOAD) || 10,
 } as const;

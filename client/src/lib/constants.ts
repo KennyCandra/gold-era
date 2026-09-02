@@ -1,22 +1,59 @@
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
-export const MAX_FILES_PER_UPLOAD = 10;
 
-export const ACCEPTED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/csv",
-  "text/plain",
-  "application/json",
-  "application/zip",
-  "application/x-zip-compressed",
-] as const;
+export interface AcceptedFileType {
+  label: string;
+  extensions: string[];
+  mimes: string[];
+}
+
+export const ACCEPTED_FILE_TYPES: AcceptedFileType[] = [
+  {
+    label: "Images",
+    extensions: ["JPG", "PNG", "GIF", "WEBP", "SVG"],
+    mimes: ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"],
+  },
+  { label: "PDF", extensions: ["PDF"], mimes: ["application/pdf"] },
+  {
+    label: "Word",
+    extensions: ["DOC", "DOCX"],
+    mimes: [
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ],
+  },
+  {
+    label: "Excel",
+    extensions: ["XLS", "XLSX"],
+    mimes: [
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ],
+  },
+  { label: "CSV", extensions: ["CSV"], mimes: ["text/csv"] },
+  { label: "Text", extensions: ["TXT", "MD"], mimes: ["text/plain", "text/markdown"] },
+  { label: "JSON", extensions: ["JSON"], mimes: ["application/json"] },
+  {
+    label: "ZIP",
+    extensions: ["ZIP"],
+    mimes: ["application/zip", "application/x-zip-compressed"],
+  },
+];
+
+export const ACCEPTED_MIME_TYPES: string[] = ACCEPTED_FILE_TYPES.flatMap((t) => t.mimes);
+
+/**
+ * Lowercase extensions, for the browsers that report an empty MIME type.
+ * `jpeg` is an alias of `jpg`, which the chip list does not spell out.
+ */
+export const ACCEPTED_EXTENSIONS: string[] = [
+  ...new Set([
+    ...ACCEPTED_FILE_TYPES.flatMap((t) => t.extensions.map((e) => e.toLowerCase())),
+    "jpeg",
+  ]),
+];
+
+/** Brief phrasing of the allowed groups, for error messages. */
+export const ACCEPTED_TYPES_SUMMARY = "images, PDF, Word, Excel, CSV, text, JSON, ZIP";
 
 export type FileTypeGroup =
   | "Documents"

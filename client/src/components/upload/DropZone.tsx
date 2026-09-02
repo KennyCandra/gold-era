@@ -5,7 +5,12 @@ import { useDropzone, type FileRejection } from "react-dropzone";
 import { motion, useReducedMotion } from "framer-motion";
 import { UploadCloud } from "lucide-react";
 
-import { ACCEPTED_MIME_TYPES, MAX_FILES_PER_UPLOAD, MAX_FILE_SIZE_BYTES } from "@/lib/constants";
+import { Badge } from "@/components/ui";
+import {
+  ACCEPTED_FILE_TYPES,
+  ACCEPTED_MIME_TYPES,
+  MAX_FILE_SIZE_BYTES,
+} from "@/lib/constants";
 import { cn, formatBytes } from "@/lib/utils";
 
 export interface DropZoneProps {
@@ -84,10 +89,18 @@ export function DropZone({ onFiles, className }: DropZoneProps) {
           <>
             <span className="text-lg font-semibold leading-7">Drag &amp; drop files here</span>
             <span className="text-[13px] leading-[18px] text-muted">or click to browse</span>
-            <span className="max-w-[380px] text-[13px] leading-[18px] text-subtle">
-              Max {MAX_FILES_PER_UPLOAD} files · {formatBytes(MAX_FILE_SIZE_BYTES)} each · Images,
-              PDFs, documents, spreadsheets, text, CSV, JSON, ZIP
+            <span className="text-[13px] leading-[18px] text-subtle">
+              Up to {formatBytes(MAX_FILE_SIZE_BYTES)} per file
             </span>
+            <div className="mt-1 flex max-w-[440px] flex-wrap items-center justify-center gap-1">
+              {ACCEPTED_FILE_TYPES.map((type) => (
+                <Badge key={type.label} tone="neutral">
+                  {type.extensions.length > 1
+                    ? `${type.label} (${type.extensions.join(", ")})`
+                    : type.label}
+                </Badge>
+              ))}
+            </div>
           </>
         )}
       </motion.div>

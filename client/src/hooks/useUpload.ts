@@ -7,8 +7,9 @@ import type { AxiosProgressEvent } from "axios";
 
 import { api } from "@/lib/api";
 import {
+  ACCEPTED_EXTENSIONS,
   ACCEPTED_MIME_TYPES,
-  MAX_FILES_PER_UPLOAD,
+  ACCEPTED_TYPES_SUMMARY,
   MAX_FILE_SIZE_BYTES,
 } from "@/lib/constants";
 import { formatBytes } from "@/lib/utils";
@@ -30,30 +31,14 @@ function nextId(): string {
   return `upload-${Date.now()}-${uidCounter}`;
 }
 
+const UNSUPPORTED_TYPE_ERROR = `Unsupported type. Allowed: ${ACCEPTED_TYPES_SUMMARY}`;
+
 function isAcceptedType(file: File): boolean {
-  if (ACCEPTED_MIME_TYPES.includes(file.type as (typeof ACCEPTED_MIME_TYPES)[number])) {
+  if (ACCEPTED_MIME_TYPES.includes(file.type)) {
     return true;
   }
-  // Some browsers/OSes report an empty MIME type for certain files (e.g. .csv,
-  // .json on some Windows configs) — fall back to extension sniffing.
   const ext = file.name.split(".").pop()?.toLowerCase();
-  const extFallback: Record<string, boolean> = {
-    csv: true,
-    json: true,
-    txt: true,
-    zip: true,
-    doc: true,
-    docx: true,
-    xls: true,
-    xlsx: true,
-    pdf: true,
-    jpg: true,
-    jpeg: true,
-    png: true,
-    gif: true,
-    webp: true,
-  };
-  return !!ext && !!extFallback[ext];
+  return !!ext && ACCEPTED_EXTENSIONS.includes(ext);
 }
 
 export function useUpload() {
@@ -139,22 +124,9 @@ export function useUpload() {
       if (files.length === 0) return;
 
       const newItems: UploadQueueItem[] = [];
-      let runningCount = itemsRef.current.length;
 
       for (const file of files) {
         const id = nextId();
-        runningCount += 1;
-
-        if (runningCount > MAX_FILES_PER_UPLOAD) {
-          newItems.push({
-            id,
-            file,
-            status: "error",
-            progress: 0,
-            error: `Max ${MAX_FILES_PER_UPLOAD} files exceeded`,
-          });
-          continue;
-        }
 
         if (file.size > MAX_FILE_SIZE_BYTES) {
           newItems.push({
@@ -173,7 +145,7 @@ export function useUpload() {
             file,
             status: "error",
             progress: 0,
-            error: "File type not supported",
+            error: UNSUPPORTED_TYPE_ERROR,
           });
           continue;
         }
@@ -200,7 +172,7 @@ export function useUpload() {
         return;
       }
       if (!isAcceptedType(item.file)) {
-        updateItem(id, { status: "error", error: "File type not supported" });
+        updateItem(id, { status: "error", error: UNSUPPORTED_TYPE_ERROR });
         return;
       }
 
