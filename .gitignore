@@ -38,4 +38,16 @@ coverage/
 
 /design
 .claude
-*.md
+
+# agent scaffolding - not part of the deliverable
+CLAUDE.md
+AGENTS.md
+DESIGN-BRIEF.md
+STAGES.md
+ISSUES.md
+IMPROVEMENTS.md
+PLAN.md
+TESTING.md
+.agents/
+.windsurf/
+md/*
