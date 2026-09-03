@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,16 @@ export interface SelectProps {
   'aria-label'?: string;
 }
 
+const MENU_GAP = 4;
+const ROW_HEIGHT = 30;
+const MENU_PADDING = 8;
+
+type MenuPosition = {
+  left: number;
+  top: number;
+  width: number;
+};
+
 export function Select({
   options,
   value,
@@ -31,29 +42,94 @@ export function Select({
   ...rest
 }: SelectProps) {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<MenuPosition | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const updatePosition = useCallback(() => {
+    const trigger = rootRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const menuHeight = options.length * ROW_HEIGHT + MENU_PADDING;
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    const flip = spaceBelow < menuHeight + MENU_GAP && rect.top > spaceBelow;
+
+    setPosition({
+      left: rect.left,
+      top: flip ? rect.top - menuHeight - MENU_GAP : rect.bottom + MENU_GAP,
+      width: rect.width,
+    });
+  }, [options.length]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+  }, [open, updatePosition]);
 
   useEffect(() => {
     if (!open) return;
 
-    const handleClick = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
+    const handlePointerDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) {
+        return;
       }
+      setOpen(false);
     };
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
 
-    document.addEventListener('mousedown', handleClick);
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('keydown', handleKey);
+
     return () => {
-      document.removeEventListener('mousedown', handleClick);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+      document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleKey);
     };
-  }, [open]);
+  }, [open, updatePosition]);
 
   const selected = options.find((o) => o.value === value);
+
+  const menu =
+    open && position ? (
+      <div
+        ref={menuRef}
+        role="listbox"
+        style={{ left: position.left, top: position.top, width: position.width }}
+        className="fixed z-50 flex flex-col gap-0.5 rounded-lg border border-border bg-raised p-1 shadow-[var(--shadow)]"
+      >
+        {options.map((option) => {
+          const isSelected = option.value === value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              aria-selected={isSelected}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+              className={cn(
+                'flex h-7.5 items-center rounded-md px-2 text-left text-sm',
+                isSelected
+                  ? 'bg-accent-subtle font-medium text-accent-text'
+                  : 'text-muted hover:bg-bg',
+              )}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    ) : null;
 
   return (
     <div ref={rootRef} className={cn('relative', className)}>
@@ -81,36 +157,9 @@ export function Select({
         />
       </button>
 
-      {open && (
-        <div
-          role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 flex flex-col gap-0.5 rounded-lg border border-border bg-raised p-1 shadow-[var(--shadow)]"
-        >
-          {options.map((option) => {
-            const isSelected = option.value === value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-                className={cn(
-                  'flex h-7.5 items-center rounded-md px-2 text-left text-sm',
-                  isSelected
-                    ? 'bg-accent-subtle font-medium text-accent-text'
-                    : 'text-muted hover:bg-bg',
-                )}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {typeof document !== 'undefined' && menu
+        ? createPortal(menu, document.body)
+        : null}
     </div>
   );
 }
