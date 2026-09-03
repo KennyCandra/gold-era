@@ -20,7 +20,8 @@ export type AuthContextValue = {
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  isVerified: boolean;
+  login: (email: string, password: string) => Promise<User>;
   register: (name: string, email: string, password: string) => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<void>;
   resendCode: (email: string) => Promise<void>;
@@ -89,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setAccessToken(res.data.accessToken);
       queryClient.setQueryData(["auth", "profile"], res.data.user);
+      return res.data.user;
     },
     [queryClient, setAccessToken]
   );
@@ -147,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isAuthenticated: !!user,
       isAdmin: user?.role === "ADMIN",
+      isVerified: user?.verified === true,
       login,
       register,
       verifyEmail,

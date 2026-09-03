@@ -7,16 +7,22 @@ import { FullScreenSpinner } from "@/components/auth/FullScreenSpinner";
 import { useAuth } from "@/hooks/useAuth";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, isVerified, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isLoading) return;
+    if (!isAuthenticated) {
       router.replace("/login");
+      return;
     }
-  }, [isLoading, isAuthenticated, router]);
+    if (!isVerified) {
+      const email = user?.email ? `?email=${encodeURIComponent(user.email)}` : "";
+      router.replace(`/verify-email${email}`);
+    }
+  }, [isLoading, isAuthenticated, isVerified, user?.email, router]);
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || !isAuthenticated || !isVerified) {
     return <FullScreenSpinner />;
   }
 

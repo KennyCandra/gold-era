@@ -110,11 +110,11 @@ function SuccessCheck() {
 function VerifyEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { verifyEmail, resendCode } = useAuth();
+  const { verifyEmail, resendCode, user, logout } = useAuth();
   const reduceMotion = useReducedMotion();
   const shakeControls = useAnimationControls();
 
-  const email = searchParams.get("email") ?? "";
+  const email = searchParams.get("email") ?? user?.email ?? "";
 
   const [digits, setDigits] = useState<string[]>(emptyOtpDigits);
   const [error, setError] = useState<string | null>(null);
@@ -247,6 +247,22 @@ function VerifyEmailForm() {
                 )}
               </p>
             </div>
+
+            {user && !user.verified ? (
+              <div className="flex flex-col gap-2 rounded-lg bg-accent-subtle px-3 py-2.5 text-[13px] leading-4.5">
+                <p className="text-text">
+                  Your account isn&apos;t verified yet. Uploads, files and the
+                  dashboard stay locked until you enter the code above.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void logout()}
+                  className="self-start text-accent-text hover:underline"
+                >
+                  Sign out and use a different account
+                </button>
+              </div>
+            ) : null}
 
             <AnimatePresence initial={false}>
               {error ? (

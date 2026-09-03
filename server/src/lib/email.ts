@@ -2,15 +2,6 @@ import nodemailer from "nodemailer";
 import { env } from "@/config";
 import { OTP_TTL_MINUTES } from "./otp";
 
-// Railway blocks outbound SMTP (25/465/587) on Free, Trial and Hobby plans, so
-// SMTP cannot be the production transport. SendGrid and Brevo both send over
-// 443, which is unaffected by that block.
-//
-// Providers are tried in order and the first success wins, because an API key
-// being present does not mean the account can actually send - SendGrid answers
-// a valid, mail.send-scoped key with 401 "Maximum credits exceeded" once its
-// credits are gone. That failure is only visible at send time, so the fallback
-// has to live here rather than in configuration.
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: { user: env.gmailUser, pass: env.gmailPass },
@@ -75,16 +66,12 @@ const sendViaBrevo = async ({ to, subject, text, html }: Message) => {
     }),
   });
 
-  // Brevo answers 201 with a messageId on success.
   if (!response.ok) {
     const detail = await response.text();
     throw new Error(`Brevo responded ${response.status}: ${detail.slice(0, 300)}`);
   }
 };
 
-// Brevo's relay also answers on 2525, which is outside Railway's blocked set
-// (25/465/587). Kept as a third way out, behind the HTTPS call: an open port is
-// an observation about today's platform, not a guarantee.
 const brevoRelay = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
   port: 2525,
@@ -101,15 +88,11 @@ const sendViaBrevoRelay = ({ to, subject, text, html }: Message) =>
 const sendViaGmail = ({ to, subject, text, html }: Message) =>
   transporter.sendMail({ from: env.gmailUser, to, subject, text, html });
 
-// Ordered by confirmed reliability, not preference. Brevo's HTTPS API is the
-// only transport verified to work from Railway, so it leads; SendGrid sits
-// behind it because a valid key there still 401s on exhausted credits, and
-// Gmail is last because its SMTP port is blocked in production entirely.
 const providers: Provider[] = [
+  { name: "gmail", enabled: Boolean(env.gmailUser && env.gmailPass), send: sendViaGmail },
   { name: "brevo", enabled: Boolean(env.brevoApiKey), send: sendViaBrevo },
   { name: "brevo-relay-2525", enabled: Boolean(env.brevoSmtpUser && env.brevoSmtpPass), send: sendViaBrevoRelay },
   { name: "sendgrid", enabled: Boolean(env.sendgridApiKey), send: sendViaSendGrid },
-  { name: "gmail", enabled: Boolean(env.gmailUser && env.gmailPass), send: sendViaGmail },
 ];
 
 const send = async (to: string, subject: string, heading: string, code: string) => {

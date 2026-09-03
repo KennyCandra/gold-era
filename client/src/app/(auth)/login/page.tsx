@@ -60,7 +60,14 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await login(email, password);
+      const signedIn = await login(email, password);
+
+      if (!signedIn.verified) {
+        toast("Verify your email to continue");
+        router.push(`/verify-email?email=${encodeURIComponent(signedIn.email)}`);
+        return;
+      }
+
       toast.success("Welcome back");
       router.push("/dashboard");
     } catch (err) {
