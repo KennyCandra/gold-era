@@ -10,7 +10,6 @@ import fileRouter from "./routes/file";
 import statsRouter from "./routes/stats";
 import adminUserRouter from "./routes/user";
 import { errorHandler } from "./middlewares/errorHandler";
-import smtpDebugRouter from "./routes/smtpDebug";
 
 const app = express();
 
@@ -22,7 +21,6 @@ app.use("/auth", userRouter);
 app.use("/files", fileRouter);
 app.use("/users", adminUserRouter);
 app.use("/stats", statsRouter);
-app.use("/debug", smtpDebugRouter);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ message: "hello" });
