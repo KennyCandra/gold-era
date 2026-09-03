@@ -86,7 +86,7 @@ function FilesPageContent() {
   const mimeType =
     type !== "all" && typeLabel ? GROUP_TO_MIMES[typeLabel]?.join(",") : undefined;
 
-  const { data, isLoading, isError, isFetching, refetch } = useFiles({
+  const { data, isLoading, isError, isFetching, isPlaceholderData, refetch } = useFiles({
     page,
     limit: PAGE_SIZE,
     search: urlQuery || undefined,
@@ -94,6 +94,12 @@ function FilesPageContent() {
     sortOrder,
     mimeType,
   });
+
+  const paramKey = `${page}-${sort}-${type}-${urlQuery}`;
+  const [settledKey, setSettledKey] = useState(paramKey);
+  if (!isPlaceholderData && paramKey !== settledKey) {
+    setSettledKey(paramKey);
+  }
 
   const deleteMutation = useDeleteFile();
   const [fileToDelete, setFileToDelete] = useState<FileItem | null>(null);
@@ -189,6 +195,7 @@ function FilesPageContent() {
           {view === "grid" ? (
             <FileGrid
               files={data?.data ?? []}
+              swapKey={settledKey}
               isLoading={isLoading}
               onDelete={setFileToDelete}
               onDownload={handleDownload}
@@ -197,6 +204,7 @@ function FilesPageContent() {
           ) : (
             <FileTable
               files={data?.data ?? []}
+              swapKey={settledKey}
               isLoading={isLoading}
               sortBy={sortBy}
               sortOrder={sortOrder}

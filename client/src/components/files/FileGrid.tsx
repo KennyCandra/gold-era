@@ -15,6 +15,7 @@ export interface FileGridProps {
   onDownload?: (file: FileItem) => void;
   isLoading?: boolean;
   className?: string;
+  swapKey?: string | number;
 }
 
 function getExt(file: FileItem): string {
@@ -28,6 +29,7 @@ export function FileGrid({
   onDownload,
   isLoading = false,
   className,
+  swapKey,
 }: FileGridProps) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
@@ -55,98 +57,108 @@ export function FileGrid({
   }
 
   return (
-    <ul
-      className={cn(
-        "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-        className
-      )}
-    >
-      <AnimatePresence initial={false}>
-      {files.map((file, index) => {
-        const ext = getExt(file);
-        const kind = getFileKind(file.mimeType || ext);
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={swapKey ?? "static"}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.12, ease: "easeOut" }}
+      >
+        <ul
+          className={cn(
+            "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+            className
+          )}
+        >
+          <AnimatePresence initial={false}>
+            {files.map((file, index) => {
+              const ext = getExt(file);
+              const kind = getFileKind(file.mimeType || ext);
 
-        return (
-          <motion.li
-            key={file.id}
-            layout={!reduceMotion}
-            initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
-            transition={{
-              duration: 0.2,
-              ease: "easeOut",
-              delay: reduceMotion ? 0 : Math.min(index * 0.03, 0.24),
-              layout: { duration: 0.2, ease: "easeOut" },
-            }}
-          >
-            <div
-              role="link"
-              tabIndex={0}
-              onClick={() => router.push(`/files/${file.id}`)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  router.push(`/files/${file.id}`);
-                }
-              }}
-              className={cn(
-                "group flex h-full cursor-pointer flex-col gap-3 rounded-xl border border-border",
-                "bg-surface p-4 transition-colors hover:border-border-strong",
-                "focus-visible:outline focus-visible:outline-2",
-                "focus-visible:outline-accent-border focus-visible:outline-offset-2"
-              )}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <FileTypeIcon ext={ext} />
-                <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                  {onDownload && (
-                    <button
-                      type="button"
-                      aria-label={`Download ${file.originalName}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onDownload(file);
-                      }}
-                      className="rounded-md p-1.5 text-muted transition-colors hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border"
-                    >
-                      <Download className="h-4 w-4" strokeWidth={1.5} />
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button
-                      type="button"
-                      aria-label={`Delete ${file.originalName}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onDelete(file);
-                      }}
-                      className="rounded-md p-1.5 text-muted transition-colors hover:bg-danger-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border"
-                    >
-                      <Trash2 className="h-4 w-4" strokeWidth={1.5} />
-                    </button>
-                  )}
-                </div>
-              </div>
+              return (
+                <motion.li
+                  key={file.id}
+                  layout={!reduceMotion}
+                  initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+                  transition={{
+                    duration: 0.2,
+                    ease: "easeOut",
+                    delay: reduceMotion ? 0 : Math.min(index * 0.03, 0.24),
+                    layout: { duration: 0.2, ease: "easeOut" },
+                  }}
+                >
+                  <div
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => router.push(`/files/${file.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/files/${file.id}`);
+                      }
+                    }}
+                    className={cn(
+                      "group flex h-full cursor-pointer flex-col gap-3 rounded-xl border border-border",
+                      "bg-surface p-4 transition-colors hover:border-border-strong",
+                      "focus-visible:outline focus-visible:outline-2",
+                      "focus-visible:outline-accent-border focus-visible:outline-offset-2"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <FileTypeIcon ext={ext} />
+                      <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                        {onDownload && (
+                          <button
+                            type="button"
+                            aria-label={`Download ${file.originalName}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onDownload(file);
+                            }}
+                            className="rounded-md p-1.5 text-muted transition-colors hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border"
+                          >
+                            <Download className="h-4 w-4" strokeWidth={1.5} />
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            type="button"
+                            aria-label={`Delete ${file.originalName}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onDelete(file);
+                            }}
+                            className="rounded-md p-1.5 text-muted transition-colors hover:bg-danger-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-border"
+                          >
+                            <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
-              <div className="flex min-w-0 flex-col gap-1">
-                <span className="truncate text-sm font-medium text-text" title={file.originalName}>
-                  {file.originalName}
-                </span>
-                <Badge tone={kind.colorVar.replace("--", "") as BadgeTone} className="w-fit">
-                  {kind.label}
-                </Badge>
-              </div>
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="truncate text-sm font-medium text-text" title={file.originalName}>
+                        {file.originalName}
+                      </span>
+                      <Badge tone={kind.colorVar.replace("--", "") as BadgeTone} className="w-fit">
+                        {kind.label}
+                      </Badge>
+                    </div>
 
-              <div className="mt-auto flex items-center justify-between text-xs text-muted tabular">
-                <span>{formatBytes(file.size)}</span>
-                <span>{formatRelative(file.createdAt)}</span>
-              </div>
-            </div>
-          </motion.li>
-        );
-      })}
-      </AnimatePresence>
-    </ul>
+                    <div className="mt-auto flex items-center justify-between text-xs text-muted tabular">
+                      <span>{formatBytes(file.size)}</span>
+                      <span>{formatRelative(file.createdAt)}</span>
+                    </div>
+                  </div>
+                </motion.li>
+              );
+            })}
+          </AnimatePresence>
+        </ul>
+      </motion.div>
+    </AnimatePresence>
   );
 }

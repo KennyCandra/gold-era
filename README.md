@@ -5,8 +5,8 @@ files by drag & drop, browse them with search / filter / sort / pagination, view
 content and per-file metadata, and see usage statistics. Administrators additionally manage all
 users and all files from a dedicated admin area.
 
-**Live frontend:** _not yet deployed_
-**Live backend:** _not yet deployed_
+**Live frontend:** https://gold-era-five.vercel.app
+**Live backend:** https://dolphin-app-3eqsh.ondigitalocean.app (health check: [`/health`](https://dolphin-app-3eqsh.ondigitalocean.app/health))
 
 > The backend is hosted on a free tier and may take up to a minute to wake on the first request.
 
@@ -41,7 +41,7 @@ users and all files from a dedicated admin area.
 | Auth | JWT (access + refresh), bcryptjs |
 | Uploads | Multer (memory storage → disk) |
 | Validation | Zod 4 |
-| Email | Nodemailer (Gmail SMTP) |
+| Email | Gmail SMTP (Nodemailer) with HTTPS fallbacks: Brevo, SendGrid |
 | Extraction | `pdf-parse`, `mammoth` |
 | Tests | Vitest + Supertest |
 
@@ -140,8 +140,10 @@ Dark mode · file download · soft delete · refresh-token auth · text content 
 
 - Node.js 20 or newer
 - A PostgreSQL database (local or hosted)
-- A Gmail account with an [app password](https://support.google.com/accounts/answer/185833) —
-  optional; without it OTP emails are logged as failures and registration still succeeds
+- An email provider — optional; without one OTP emails are logged as failures and registration
+  still succeeds. Any of: a Gmail account with an
+  [app password](https://support.google.com/accounts/answer/185833), a Brevo API key, or a
+  SendGrid API key
 
 ### Install
 
@@ -175,9 +177,13 @@ ADMIN_EMAIL=admin@example.com
 ADMIN_NAME=Admin
 ADMIN_PASSWORD=Admin123
 
-# Gmail app password, not your account password
-GMAIL_USER=
-GMAIL_PASS=
+GMAIL_USER=            # Gmail address
+GMAIL_PASS=            # Gmail app password, not your account password
+BREVO_API_KEY=
+BREVO_SMTP_USER=
+BREVO_SMTP_PASS=
+SENDGRID_API_KEY=
+MAIL_FROM=             # sender address for Brevo / SendGrid (must be a verified sender)
 
 # Allowed CORS origin
 CLIENT_URL=http://localhost:3000
@@ -185,7 +191,6 @@ CLIENT_URL=http://localhost:3000
 # Uploads
 UPLOAD_DIR=./uploads
 MAX_FILE_SIZE=10485760
-MAX_FILES_PER_UPLOAD=10
 ```
 
 `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET` and `CLIENT_URL` are required — the server
@@ -291,6 +296,7 @@ The refresh token travels only as an httpOnly cookie and is never returned in a 
 | GET | `/auth/refresh` | refresh cookie | Issue a new access token |
 | POST | `/auth/logout` | public | Clear the refresh cookie |
 | GET | `/auth/profile` | authenticated | Current user |
+| PATCH | `/auth/change-password` | authenticated | Change password; a wrong current password is `400`, not `401` |
 
 ### Files
 
@@ -334,40 +340,47 @@ Errors return `{ success: false, message }` with a meaningful status — `400` v
 
 ## Deployment
 
-The frontend is deployed to Vercel and the backend to Railway. Because each needs the other's
-URL, deploy in this order.
+The frontend is deployed to **Vercel** and the backend to **DigitalOcean App Platform** with a
+managed PostgreSQL database. Because each needs the other's URL, deploy in this order. Any
+container host (Railway, Render, Fly.io) works the same way.
 
-### 1. Backend (Railway)
+### 1. Backend (DigitalOcean App Platform)
 
-1. Create a project from the repository and set the **root directory** to `server`.
-2. Add a **PostgreSQL** service; Railway injects `DATABASE_URL`.
-3. Attach a **volume** mounted at `/app/uploads`. Without one the container filesystem is
-   ephemeral and uploaded files disappear on every redeploy.
-4. Build command `npm run build`, start command `npm run prisma:deploy && npm start`.
-5. Set the environment variables from [above](#serverenv). Two that matter in particular:
+1. Create an app from the repository and set the **source directory** to `server`.
+2. Add a **PostgreSQL** database component and bind its connection string to `DATABASE_URL`.
+3. Build command `npm run build`, run command `npm run prisma:deploy && npm start`.
+   `prisma migrate deploy` applies the committed migrations on every release, so a fresh
+   database is fully provisioned on first boot.
+4. Set the environment variables from [above](#serverenv). Three that matter in particular:
    - `NODE_ENV=production` — required, or the refresh cookie is issued without
      `secure` / `SameSite=None` and is dropped by the browser across domains.
-   - `UPLOAD_DIR=/app/uploads` — must match the volume mount path.
-6. Seed the admin once: `npm run seed` from the Railway shell.
+   - `UPLOAD_DIR` — the container filesystem is ephemeral, so uploads survive a redeploy only if
+     this points at a mounted volume (or the storage layer is swapped for object storage; see
+     [assumptions](#assumptions-and-design-decisions)).
+   - At least one email provider. App Platform blocks outbound SMTP ports, which is why the
+     HTTPS providers (Brevo, SendGrid) exist as fallbacks.
+5. Seed the admin once: `npm run seed` from the app console.
 
 ### 2. Frontend (Vercel)
 
 1. Import the repository and set the **root directory** to `client`.
-2. Set `NEXT_PUBLIC_API_URL` to the Railway URL from step 1.
+2. Set `NEXT_PUBLIC_API_URL` to the backend URL from step 1 (no trailing slash).
 3. Deploy.
 
 ### 3. Close the loop
 
-Set `CLIENT_URL` on Railway to the Vercel URL and redeploy. This is what the CORS allow-list and
-the cross-site cookie are checked against — until it is set, the browser will block API calls.
+Set `CLIENT_URL` on the backend to the Vercel URL and redeploy. This is what the CORS allow-list
+and the cross-site cookie are checked against — until it is set, the browser will block API calls.
 
 ---
 
 ## Assumptions and design decisions
 
-**Files are stored on disk, not S3.** `UPLOAD_DIR` is read from the environment so local and
-production differ only by configuration. This keeps the project dependency-free at the cost of
-requiring a mounted volume in production.
+**Files are stored on disk, not S3.** All blob access goes through `lib/storage.ts`
+(save / read / delete by key), so swapping in S3 or R2 is a one-file change. `UPLOAD_DIR` is read
+from the environment so local and production differ only by configuration. The trade-off is that
+the production container's disk is ephemeral: uploads survive a redeploy only with a mounted
+volume, which is the known limitation of the current hosting.
 
 **Deletion is soft.** `DELETE /files/:id` sets `deletedAt`; every query filters on it. Rows and
 bytes are retained, which makes the admin dashboard's "storage on disk versus storage in use"
@@ -393,5 +406,7 @@ archives have no text to extract.
 **Pagination is offset-based** (`page` + `limit`) rather than cursor-based. Simpler, and it
 supports the numbered page controls the UI uses.
 
-**Email is optional in development.** A failed send is logged and swallowed rather than failing
-registration, so the app remains usable without Gmail credentials configured.
+**Email is optional in development, and delivery is best-effort.** A failed send is logged and
+swallowed rather than failing registration, so the app remains usable without any provider
+configured. In production several providers are tried in order (Gmail SMTP, then Brevo and
+SendGrid over HTTPS) because some hosts block outbound SMTP ports entirely.

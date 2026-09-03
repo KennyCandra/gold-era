@@ -64,6 +64,12 @@ function AdminFilesContent() {
 
   const files = filesQuery.data?.data ?? [];
 
+  const paramKey = `${page}-${sortBy}-${sortOrder}-${typeFilter}-${ownerFilter}-${search}`;
+  const [settledKey, setSettledKey] = useState(paramKey);
+  if (!filesQuery.isPlaceholderData && paramKey !== settledKey) {
+    setSettledKey(paramKey);
+  }
+
   const handleSort = (field: string) => {
     if (field === sortBy) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -138,6 +144,7 @@ function AdminFilesContent() {
         <>
           <FileTable
             files={files}
+            swapKey={settledKey}
             showOwner
             sortBy={sortBy}
             sortOrder={sortOrder}
