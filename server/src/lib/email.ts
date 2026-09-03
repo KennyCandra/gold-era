@@ -5,6 +5,9 @@ import { OTP_TTL_MINUTES } from "./otp";
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: { user: env.gmailUser, pass: env.gmailPass },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
 });
 
 const send = (to: string, subject: string, heading: string, code: string) =>

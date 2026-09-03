@@ -58,11 +58,11 @@ class authController {
             return created;
         });
 
-        try {
-            await sendVerificationEmail(newUser.email, code);
-        } catch (err) {
+        // Not awaited: the account is already committed, so a slow or blocked SMTP
+        // handshake must not hold the response open. Failures are logged, not raised.
+        void sendVerificationEmail(newUser.email, code).catch((err) => {
             console.error("register: sendVerificationEmail failed", { userId: newUser.id, email: newUser.email, err });
-        }
+        });
 
         return {newUser}
 
