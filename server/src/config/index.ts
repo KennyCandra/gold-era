@@ -30,6 +30,11 @@ export const env = {
   adminPassword: process.env.ADMIN_PASSWORD ?? "",
   gmailUser: process.env.GMAIL_USER ?? "",
   gmailPass: process.env.GMAIL_PASS ?? "",
+  sendgridApiKey: process.env.SENDGRID_API_KEY ?? "",
+  brevoApiKey: process.env.BREVO_API_KEY ?? "",
+  brevoSmtpUser: process.env.BREVO_SMTP_USER ?? "",
+  brevoSmtpPass: process.env.BREVO_SMTP_PASS ?? "",
+  mailFrom: process.env.MAIL_FROM ?? process.env.GMAIL_USER ?? "",
   uploadDir: process.env.UPLOAD_DIR ?? "./uploads",
   maxFileSize: Number(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024,
 } as const;
